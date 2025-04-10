@@ -139,7 +139,7 @@ export default function Login() {
             marginTop: 10,
           }}
         >
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate("SendOTP")}>
             <Text style={[{ fontSize: 16 }, styles.pressableText]}>
               Forgot Password?
             </Text>
@@ -200,6 +200,7 @@ const styles = StyleSheet.create({
   },
   input: {
     marginTop: 10,
+    height: 40,
     marginHorizontal: 40,
     padding: 0,
   },

@@ -13,9 +13,20 @@ import { useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AuthStackParamList } from "../types";
+import { useForm, Controller } from "react-hook-form";
+import Success from "./Success";
 
 const blurhash =
   "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
+
+type FormData = {
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+};
 
 export default function Register() {
   type Navigation = NativeStackNavigationProp<AuthStackParamList, "Register">;
@@ -26,6 +37,22 @@ export default function Register() {
   });
   const [seePass, setSeePass] = useState(false);
   const [seeConfirmPass, setSeeConfirmPass] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>();
+
+  const onSubmit = (data: FormData) => {
+    console.log(data);
+    setLoading(true);
+
+    setTimeout(() => {
+      setLoading(false);
+      navigation.navigate("Success");
+    }, 2000);
+  };
 
   useEffect(() => {
     if (loaded || error) {
@@ -38,111 +65,247 @@ export default function Register() {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <StatusBar hidden={true}></StatusBar>
-      <TouchableOpacity
-        style={styles.backContainer}
-        onPress={() => navigation.pop()}
-      >
-        <Icon source="arrow-left" color="#FF9500" size={16} />
-        <Text style={styles.backText}>Back</Text>
-      </TouchableOpacity>
-      <View style={styles.iconContainer}>
-        <Image
-          style={styles.icon}
-          source={require("../../assets/images/iQueueImage.svg")}
-          placeholder={{ blurhash }}
-          contentFit="cover"
-        />
-        <Text style={styles.iconText}>iQUEUE</Text>
-      </View>
-      <View style={styles.formContainer}>
-        <TextInput
-          label="First Name"
-          mode="outlined"
-          outlineColor="#000"
-          activeOutlineColor="#FF9500"
-          textColor="#000"
-          style={[styles.input, { backgroundColor: "transparent" }]}
-          contentStyle={{ fontFamily: "Poppins_400Regular" }}
-        />
-        <TextInput
-          label="Last Name"
-          mode="outlined"
-          outlineColor="#000"
-          activeOutlineColor="#FF9500"
-          textColor="#000"
-          style={[styles.input, { backgroundColor: "transparent" }]}
-          contentStyle={{ fontFamily: "Poppins_400Regular" }}
-        />
-        <TextInput
-          label="Username"
-          mode="outlined"
-          outlineColor="#000"
-          activeOutlineColor="#FF9500"
-          textColor="#000"
-          style={[styles.input, { backgroundColor: "transparent" }]}
-          contentStyle={{ fontFamily: "Poppins_400Regular" }}
-        />
-        <TextInput
-          label="Email"
-          mode="outlined"
-          outlineColor="#000"
-          activeOutlineColor="#FF9500"
-          textColor="#000"
-          style={[styles.input, { backgroundColor: "transparent" }]}
-          contentStyle={{ fontFamily: "Poppins_400Regular" }}
-        />
-        <TextInput
-          label="Password"
-          secureTextEntry={!seePass}
-          mode="outlined"
-          right={
-            <TextInput.Icon
-              icon={seePass ? "eye" : "eye-off"}
-              onPress={() => setSeePass(!seePass)}
-            />
-          }
-          outlineColor="#000"
-          activeOutlineColor="#FF9500"
-          textColor="#000"
-          style={[styles.input, { backgroundColor: "transparent" }]}
-        />
-        <TextInput
-          label="Confirm Password"
-          secureTextEntry={!seeConfirmPass}
-          mode="outlined"
-          right={
-            <TextInput.Icon
-              icon={seeConfirmPass ? "eye" : "eye-off"}
-              onPress={() => setSeeConfirmPass(!seeConfirmPass)}
-            />
-          }
-          outlineColor="#000"
-          activeOutlineColor="#FF9500"
-          textColor="#000"
-          style={[styles.input, { backgroundColor: "transparent" }]}
-        />
-      </View>
-      <View>
-        <Button
-          mode="contained"
-          onPress={() => console.log("Pressed")}
-          style={[styles.input, { bottom: 20 }]}
-          buttonColor="#FF9500"
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}>
+        <StatusBar hidden={true}></StatusBar>
+        <TouchableOpacity
+          style={styles.backContainer}
+          onPress={() => navigation.pop()}
         >
-          <Text style={{ fontFamily: "Poppins_700Bold", color: "white" }}>
-            REGISTER
-          </Text>
-        </Button>
-      </View>
-    </ScrollView>
+          <Icon source="arrow-left" color="#FF9500" size={16} />
+          <Text style={styles.backText}>Back</Text>
+        </TouchableOpacity>
+        <View style={styles.iconContainer}>
+          <Image
+            style={styles.icon}
+            source={require("../../assets/images/iQueueImage.svg")}
+            placeholder={{ blurhash }}
+            contentFit="cover"
+          />
+          <Text style={styles.iconText}>iQUEUE</Text>
+        </View>
+        <View style={styles.formContainer}>
+          <Controller
+            control={control}
+            name="firstName"
+            rules={{ required: "First name is required" }}
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                label="First Name"
+                mode="outlined"
+                outlineColor="#000"
+                activeOutlineColor="#FF9500"
+                textColor="#000"
+                style={[styles.input, { backgroundColor: "transparent" }]}
+                contentStyle={{ fontFamily: "Poppins_400Regular" }}
+                value={value}
+                onChangeText={onChange}
+                error={!!errors.firstName}
+              />
+            )}
+          />
+          {errors.firstName && (
+            <Text
+              style={{
+                color: "red",
+                marginLeft: 40,
+                fontFamily: "Poppins_400Regular",
+              }}
+            >
+              {errors.firstName.message}
+            </Text>
+          )}
+
+          <Controller
+            control={control}
+            name="lastName"
+            rules={{ required: "Last name is required" }}
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                label="Last Name"
+                mode="outlined"
+                outlineColor="#000"
+                activeOutlineColor="#FF9500"
+                textColor="#000"
+                style={[styles.input, { backgroundColor: "transparent" }]}
+                contentStyle={{ fontFamily: "Poppins_400Regular" }}
+                value={value}
+                onChangeText={onChange}
+                error={!!errors.lastName}
+              />
+            )}
+          />
+          {errors.lastName && (
+            <Text
+              style={{
+                color: "red",
+                marginLeft: 40,
+                fontFamily: "Poppins_400Regular",
+              }}
+            >
+              {errors.lastName.message}
+            </Text>
+          )}
+
+          <Controller
+            control={control}
+            name="username"
+            rules={{ required: "Username is required" }}
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                label="Username"
+                mode="outlined"
+                outlineColor="#000"
+                activeOutlineColor="#FF9500"
+                textColor="#000"
+                style={[styles.input, { backgroundColor: "transparent" }]}
+                contentStyle={{ fontFamily: "Poppins_400Regular" }}
+                value={value}
+                onChangeText={onChange}
+                error={!!errors.username}
+              />
+            )}
+          />
+          {errors.username && (
+            <Text
+              style={{
+                color: "red",
+                marginLeft: 40,
+                fontFamily: "Poppins_400Regular",
+              }}
+            >
+              {errors.username.message}
+            </Text>
+          )}
+
+          <Controller
+            control={control}
+            name="email"
+            rules={{ required: "Email is required" }}
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                label="Email"
+                mode="outlined"
+                outlineColor="#000"
+                activeOutlineColor="#FF9500"
+                textColor="#000"
+                style={[styles.input, { backgroundColor: "transparent" }]}
+                contentStyle={{ fontFamily: "Poppins_400Regular" }}
+                value={value}
+                onChangeText={onChange}
+                error={!!errors.email}
+              />
+            )}
+          />
+          {errors.email && (
+            <Text
+              style={{
+                color: "red",
+                marginLeft: 40,
+                fontFamily: "Poppins_400Regular",
+              }}
+            >
+              {errors.email.message}
+            </Text>
+          )}
+
+          <Controller
+            control={control}
+            name="password"
+            rules={{ required: "Password is required" }}
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                label="Password"
+                secureTextEntry={!seePass}
+                mode="outlined"
+                right={
+                  <TextInput.Icon
+                    icon={seePass ? "eye" : "eye-off"}
+                    onPress={() => setSeePass(!seePass)}
+                  />
+                }
+                outlineColor="#000"
+                activeOutlineColor="#FF9500"
+                textColor="#000"
+                style={[styles.input, { backgroundColor: "transparent" }]}
+                value={value}
+                onChangeText={onChange}
+                error={!!errors.password}
+              />
+            )}
+          />
+          {errors.password && (
+            <Text
+              style={{
+                color: "red",
+                marginLeft: 40,
+                fontFamily: "Poppins_400Regular",
+              }}
+            >
+              {errors.password.message}
+            </Text>
+          )}
+
+          <Controller
+            control={control}
+            name="confirmPassword"
+            rules={{ required: "Password must be matched" }}
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                label="Confirm Password"
+                secureTextEntry={!seeConfirmPass}
+                mode="outlined"
+                right={
+                  <TextInput.Icon
+                    icon={seeConfirmPass ? "eye" : "eye-off"}
+                    onPress={() => setSeeConfirmPass(!seeConfirmPass)}
+                  />
+                }
+                outlineColor="#000"
+                activeOutlineColor="#FF9500"
+                textColor="#000"
+                style={[styles.input, { backgroundColor: "transparent" }]}
+                value={value}
+                onChangeText={onChange}
+                error={!!errors.confirmPassword}
+              />
+            )}
+          />
+          {errors.confirmPassword && (
+            <Text
+              style={{
+                color: "red",
+                marginLeft: 40,
+                fontFamily: "Poppins_400Regular",
+              }}
+            >
+              {errors.confirmPassword.message}
+            </Text>
+          )}
+        </View>
+        <View>
+          <Button
+            mode="contained"
+            onPress={handleSubmit(onSubmit)}
+            style={[styles.input, { bottom: 20 }]}
+            buttonColor="#FF9500"
+            loading={loading}
+            disabled={loading}
+          >
+            <Text style={{ fontFamily: "Poppins_700Bold", color: "white" }}>
+              REGISTER
+            </Text>
+          </Button>
+          <View style={{ height: 100 }}></View>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    height: "100%",
+    flex: 1,
     backgroundColor: "#FAF9F6",
   },
   backContainer: {
@@ -179,7 +342,6 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     bottom: 40,
-    gap: 10,
   },
   headerContainer: {
     display: "flex",
@@ -193,5 +355,6 @@ const styles = StyleSheet.create({
   input: {
     marginHorizontal: 40,
     padding: 0,
+    height: 40,
   },
 });
