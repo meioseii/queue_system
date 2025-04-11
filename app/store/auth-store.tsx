@@ -14,18 +14,25 @@ type RegisterPayload = {
   last_name: string;
 };
 
+type SendOtpPayload = {
+  email: string;
+};
+
 type AuthStore = {
   loading: boolean;
   token: string | null;
   error: string | null;
+  email: string | null;
   login: (payload: LoginPayload) => Promise<string | null>;
   register: (payload: RegisterPayload) => Promise<void>;
+  sendOtp: (payload: SendOtpPayload) => Promise<void>;
 };
 
 export const useAuthStore = create<AuthStore>((set) => ({
   loading: false,
   token: null,
   error: null,
+  email: null,
 
   login: async ({ username, password }) => {
     set({ loading: true, error: null });
@@ -77,6 +84,32 @@ export const useAuthStore = create<AuthStore>((set) => ({
       }
 
       const data = await response.json();
+    } catch (err: any) {
+      set({ error: err.msg });
+      throw err;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  sendOtp: async ({ email }) => {
+    set({ loading: true, error: null });
+
+    try {
+      const response = await fetch(`${BASE_URL}/customer/send-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        throw new Error("PLEASE TRY AGAIN LATER");
+      }
+
+      const data = await response.json();
+      set({ email });
     } catch (err: any) {
       set({ error: err.msg });
       throw err;

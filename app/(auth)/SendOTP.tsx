@@ -12,6 +12,8 @@ import { AuthStackParamList } from "../types";
 import { useForm, Controller } from "react-hook-form";
 import { StatusBar } from "expo-status-bar";
 import { SplashScreen } from "expo-router";
+import { useAuthStore } from "../store/auth-store";
+import Toast from "react-native-toast-message";
 
 type FormData = {
   email: string;
@@ -32,8 +34,21 @@ export default function SendOTP() {
     formState: { errors },
   } = useForm<FormData>();
 
+  const { sendOtp, loading } = useAuthStore();
+
   const onSubmit = (data: FormData) => {
-    console.log("Login Form Data:", data);
+    try {
+      sendOtp({ email: data.email });
+      navigation.navigate("VerifyOTP");
+    } catch (err: any) {
+      Toast.show({
+        type: "error",
+        text1: err.message,
+        visibilityTime: 3000,
+        autoHide: true,
+        position: "top",
+      });
+    }
   };
 
   useEffect(() => {
@@ -52,6 +67,7 @@ export default function SendOTP() {
       <TouchableOpacity
         style={styles.backContainer}
         onPress={() => navigation.pop()}
+        disabled={loading}
       >
         <Icon source="arrow-left" color="#FF9500" size={16} />
         <Text style={styles.backText}>Back</Text>
@@ -106,9 +122,11 @@ export default function SendOTP() {
         )}
         <Button
           mode="contained"
-          onPress={() => {}}
+          onPress={handleSubmit(onSubmit)}
           style={[styles.input, { marginTop: 10 }]}
           buttonColor="#FF9500"
+          loading={loading}
+          disabled={loading}
         >
           <Text style={{ fontFamily: "Poppins_700Bold", color: "white" }}>
             RESET PASSWORD
