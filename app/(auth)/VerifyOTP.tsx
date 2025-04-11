@@ -81,13 +81,7 @@ export default function VerifyOTP() {
       if (email) {
         const token = await verifyOtp(otpPayload);
         if (token) {
-          Toast.show({
-            type: "success",
-            text1: `VERIFY SUCCESSFUL`,
-            visibilityTime: 3000,
-            autoHide: true,
-            position: "top",
-          });
+          navigation.navigate("ChangePassword");
         }
       }
     } catch (err: any) {
@@ -188,8 +182,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAF9F6",
   },
   backContainer: {
-    bottom: 198,
-    zIndex: 1,
+    bottom: 186,
     display: "flex",
     flexDirection: "row",
     alignItems: "center",

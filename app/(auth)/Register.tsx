@@ -61,7 +61,6 @@ export default function Register() {
     async (data: FormData) => {
       try {
         await register(data);
-        console.log("Registration Form Data:", data);
         navigation.navigate("Success");
       } catch (err: any) {
         Toast.show({
@@ -372,7 +371,6 @@ const styles = StyleSheet.create({
   backContainer: {
     top: 50,
     marginLeft: 40,
-    zIndex: 1,
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
@@ -386,7 +384,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   iconContainer: {
-    backgroundColor: "#FAF9F6",
+    backgroundColor: "transparent",
     height: "40%",
     padding: "10%",
     justifyContent: "center",

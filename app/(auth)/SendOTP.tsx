@@ -44,6 +44,7 @@ export default function SendOTP() {
       Toast.show({
         type: "error",
         text1: err.message,
+        text2: "NO ACCOUNT ASSOCIATED WITH THIS EMAIL ADDRESS",
         visibilityTime: 3000,
         autoHide: true,
         position: "top",
@@ -113,7 +114,7 @@ export default function SendOTP() {
           <Text
             style={{
               color: "red",
-              marginLeft: 40,
+              marginLeft: 10,
               fontFamily: "Poppins_400Regular",
             }}
           >
@@ -133,6 +134,7 @@ export default function SendOTP() {
           </Text>
         </Button>
       </View>
+      <Toast />
     </View>
   );
 }
@@ -146,7 +148,6 @@ const styles = StyleSheet.create({
   },
   backContainer: {
     bottom: 225,
-    zIndex: 1,
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
