@@ -7,7 +7,7 @@ import {
   Poppins_700Bold,
 } from "@expo-google-fonts/poppins";
 import { TextInput, Button, Text } from "react-native-paper";
-import { Icon, MD3Colors } from "react-native-paper";
+import { Icon } from "react-native-paper";
 import {
   View,
   StyleSheet,
@@ -18,20 +18,21 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
+import { useAuthStore } from "../store/auth-store";
+import Toast from "react-native-toast-message";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AuthStackParamList } from "../types";
 import { useForm, Controller } from "react-hook-form";
-import Success from "./Success";
 
 const blurhash =
   "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
 
 type FormData = {
-  firstName: string;
-  lastName: string;
+  first_name: string;
+  last_name: string;
   username: string;
   email: string;
   password: string;
@@ -47,7 +48,6 @@ export default function Register() {
   });
   const [seePass, setSeePass] = useState(false);
   const [seeConfirmPass, setSeeConfirmPass] = useState(false);
-  const [loading, setLoading] = useState<boolean>(false);
   const {
     control,
     handleSubmit,
@@ -55,15 +55,27 @@ export default function Register() {
     formState: { errors },
   } = useForm<FormData>();
 
-  const onSubmit = (data: FormData) => {
-    console.log(data);
-    setLoading(true);
+  const { register, loading } = useAuthStore();
 
-    setTimeout(() => {
-      setLoading(false);
-      navigation.navigate("Success");
-    }, 2000);
-  };
+  const onSubmit = useCallback(
+    async (data: FormData) => {
+      try {
+        await register(data);
+        console.log("Registration Form Data:", data);
+        navigation.navigate("Success");
+      } catch (err: any) {
+        Toast.show({
+          type: "error",
+          text1: `REGISTRATION FAILED`,
+          text2: err.message,
+          visibilityTime: 3000,
+          autoHide: true,
+          position: "top",
+        });
+      }
+    },
+    [register]
+  );
 
   useEffect(() => {
     if (loaded || error) {
@@ -105,7 +117,7 @@ export default function Register() {
           <View style={styles.formContainer}>
             <Controller
               control={control}
-              name="firstName"
+              name="first_name"
               rules={{ required: "First name is required" }}
               render={({ field: { onChange, value } }) => (
                 <TextInput
@@ -118,25 +130,27 @@ export default function Register() {
                   contentStyle={{ fontFamily: "Poppins_400Regular" }}
                   value={value}
                   onChangeText={onChange}
-                  error={!!errors.firstName}
+                  error={!!errors.first_name}
                 />
               )}
             />
-            {errors.firstName && (
+            {errors.first_name && (
               <Text
                 style={{
                   color: "red",
                   marginLeft: 40,
                   fontFamily: "Poppins_400Regular",
+                  fontSize: 12,
+                  paddingHorizontal: 10,
                 }}
               >
-                {errors.firstName.message}
+                {errors.first_name.message}
               </Text>
             )}
 
             <Controller
               control={control}
-              name="lastName"
+              name="last_name"
               rules={{ required: "Last name is required" }}
               render={({ field: { onChange, value } }) => (
                 <TextInput
@@ -149,19 +163,21 @@ export default function Register() {
                   contentStyle={{ fontFamily: "Poppins_400Regular" }}
                   value={value}
                   onChangeText={onChange}
-                  error={!!errors.lastName}
+                  error={!!errors.last_name}
                 />
               )}
             />
-            {errors.lastName && (
+            {errors.last_name && (
               <Text
                 style={{
                   color: "red",
                   marginLeft: 40,
                   fontFamily: "Poppins_400Regular",
+                  fontSize: 12,
+                  paddingHorizontal: 10,
                 }}
               >
-                {errors.lastName.message}
+                {errors.last_name.message}
               </Text>
             )}
 
@@ -190,6 +206,8 @@ export default function Register() {
                   color: "red",
                   marginLeft: 40,
                   fontFamily: "Poppins_400Regular",
+                  fontSize: 12,
+                  paddingHorizontal: 10,
                 }}
               >
                 {errors.username.message}
@@ -227,6 +245,8 @@ export default function Register() {
                   color: "red",
                   marginLeft: 40,
                   fontFamily: "Poppins_400Regular",
+                  fontSize: 12,
+                  paddingHorizontal: 10,
                 }}
               >
                 {errors.email.message}
@@ -272,6 +292,8 @@ export default function Register() {
                   color: "red",
                   marginLeft: 40,
                   fontFamily: "Poppins_400Regular",
+                  fontSize: 12,
+                  paddingHorizontal: 10,
                 }}
               >
                 {errors.password.message}
@@ -313,6 +335,8 @@ export default function Register() {
                   color: "red",
                   marginLeft: 40,
                   fontFamily: "Poppins_400Regular",
+                  fontSize: 12,
+                  paddingHorizontal: 10,
                 }}
               >
                 {errors.confirmPassword.message}
@@ -323,7 +347,7 @@ export default function Register() {
             <Button
               mode="contained"
               onPress={handleSubmit(onSubmit)}
-              style={[styles.input, { bottom: 20 }]}
+              style={[styles.input, { bottom: 30 }]}
               buttonColor="#FF9500"
               loading={loading}
               disabled={loading}
@@ -378,7 +402,7 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_700Bold",
   },
   formContainer: {
-    bottom: 40,
+    bottom: 50,
   },
   headerContainer: {
     display: "flex",
@@ -392,6 +416,7 @@ const styles = StyleSheet.create({
   input: {
     marginHorizontal: 40,
     padding: 0,
+    marginTop: 10,
     height: 40,
   },
 });

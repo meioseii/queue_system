@@ -118,6 +118,8 @@ export default function Login() {
               color: "red",
               marginLeft: 40,
               fontFamily: "Poppins_400Regular",
+              fontSize: 12,
+              paddingHorizontal: 10,
             }}
           >
             {errors.username.message}
@@ -155,6 +157,8 @@ export default function Login() {
               color: "red",
               marginLeft: 40,
               fontFamily: "Poppins_400Regular",
+              fontSize: 12,
+              paddingHorizontal: 10,
             }}
           >
             {errors.password.message}
