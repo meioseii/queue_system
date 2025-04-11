@@ -2,7 +2,11 @@ import { create } from "zustand";
 
 const BASE_URL = "https://iqueue-eor5.onrender.com";
 
-type AuthPayload = {
+type LoginPayload = {
+  username: string;
+  password: string;
+};
+type RegisterPayload = {
   username: string;
   password: string;
   email: string;
@@ -14,8 +18,8 @@ type AuthStore = {
   loading: boolean;
   token: string | null;
   error: string | null;
-  login: (payload: AuthPayload) => Promise<string | null>;
-  register: (payload: AuthPayload) => Promise<string | null>;
+  login: (payload: LoginPayload) => Promise<string | null>;
+  register: (payload: RegisterPayload) => Promise<void>;
 };
 
 export const useAuthStore = create<AuthStore>((set) => ({
@@ -73,8 +77,6 @@ export const useAuthStore = create<AuthStore>((set) => ({
       }
 
       const data = await response.json();
-      set({ token: data.token });
-      return data.token;
     } catch (err: any) {
       set({ error: err.msg });
       throw err;
