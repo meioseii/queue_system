@@ -5,6 +5,7 @@ import Login from "./Login";
 import Register from "./Register";
 import Success from "./Success";
 import SendOTP from "./SendOTP";
+import VerifyOTP from "./VerifyOTP";
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
@@ -30,6 +31,11 @@ export default function AuthLayout() {
         <Stack.Screen
           name="SendOTP"
           component={SendOTP}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="VerifyOTP"
+          component={VerifyOTP}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
