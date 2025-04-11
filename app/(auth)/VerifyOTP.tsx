@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import {
   useFonts,
@@ -9,32 +9,42 @@ import { Button, Text, Icon } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AuthStackParamList } from "../types";
-import { useForm, Controller } from "react-hook-form";
 import { StatusBar } from "expo-status-bar";
 import { SplashScreen } from "expo-router";
 import { OtpInput } from "react-native-otp-entry";
 
-type FormData = {
-  email: string;
-};
-
 export default function VerifyOTP() {
   type Navigation = NativeStackNavigationProp<AuthStackParamList, "SendOTP">;
   const navigation = useNavigation<Navigation>();
+
+  const [countdown, setCountdown] = useState(0);
+  const [isResendDisabled, setIsResendDisabled] = useState(true);
 
   const [loaded, error] = useFonts({
     Poppins_400Regular,
     Poppins_700Bold,
   });
 
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<FormData>();
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
 
-  const onSubmit = (data: FormData) => {
-    console.log("Login Form Data:", data);
+    if (countdown > 0) {
+      timer = setTimeout(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    } else {
+      setIsResendDisabled(false);
+    }
+
+    return () => clearTimeout(timer);
+  }, [countdown]);
+
+  const resendCode = () => {
+    console.log("Resending OTP...");
+    setCountdown(30);
+    setIsResendDisabled(true);
+
+    // TODO: Call API to resend OTP
   };
 
   useEffect(() => {
@@ -46,6 +56,10 @@ export default function VerifyOTP() {
   if (!loaded && !error) {
     return null;
   }
+
+  const submit = (otp: string) => {
+    console.log(otp);
+  };
 
   return (
     <View style={styles.container}>
@@ -85,36 +99,31 @@ export default function VerifyOTP() {
           To complete the verification process, please enter the 6-digit code
           below.
         </Text>
-        <Controller
-          control={control}
-          name="email"
-          rules={{ required: "Email is required" }}
-          render={({ field: { onChange, value } }) => (
-            <OtpInput
-              numberOfDigits={6}
-              focusColor={"#FF9500"}
-              theme={{
-                pinCodeContainerStyle: styles.pinCodeContainer,
-                pinCodeTextStyle: styles.pinCodeText,
-              }}
-            />
-          )}
+        <OtpInput
+          numberOfDigits={6}
+          onFilled={(otp) => submit(otp)}
+          focusColor={"#FF9500"}
+          theme={{
+            pinCodeContainerStyle: styles.pinCodeContainer,
+            pinCodeTextStyle: styles.pinCodeText,
+          }}
         />
-        {errors.email && (
-          <Text
-            style={{
-              color: "red",
-              marginLeft: 40,
-              fontFamily: "Poppins_400Regular",
-            }}
-          >
-            {errors.email.message}
+        <View style={styles.forgotPasswordContainer}>
+          <Text style={{ fontFamily: "Poppins_400Regular" }}>
+            {isResendDisabled
+              ? `Resend code in ${countdown}s`
+              : "Didn't receive code? "}
           </Text>
-        )}
+          <TouchableOpacity onPress={() => resendCode()}>
+            <Text style={[{ fontSize: 16 }, styles.pressableText]}>
+              {isResendDisabled ? null : "Resend"}
+            </Text>
+          </TouchableOpacity>
+        </View>
         <Button
           mode="contained"
           onPress={() => {}}
-          style={{ marginTop: 25 }}
+          style={{ marginTop: 10 }}
           buttonColor="#FF9500"
         >
           <Text style={{ fontFamily: "Poppins_700Bold", color: "white" }}>
@@ -134,7 +143,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAF9F6",
   },
   backContainer: {
-    bottom: 225,
+    bottom: 198,
     zIndex: 1,
     display: "flex",
     flexDirection: "row",
@@ -169,5 +178,15 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 10,
+  },
+  forgotPasswordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 15,
+  },
+  pressableText: {
+    color: "#FF9500",
+    textDecorationLine: "underline",
+    fontFamily: "Poppins_400Regular",
   },
 });

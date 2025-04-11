@@ -57,7 +57,7 @@ export default function SendOTP() {
         <Text style={styles.backText}>Back</Text>
       </TouchableOpacity>
 
-      <View style={{ bottom: 150 }}>
+      <View style={{ bottom: 177 }}>
         <View style={styles.headerContainer}>
           <Icon source="lock-open" size={24} color="#000" />
           <Text style={styles.title}>Forgot Password?</Text>
