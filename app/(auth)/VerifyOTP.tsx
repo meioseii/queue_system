@@ -13,6 +13,12 @@ import { StatusBar } from "expo-status-bar";
 import { SplashScreen } from "expo-router";
 import { OtpInput } from "react-native-otp-entry";
 import { useAuthStore } from "../store/auth-store";
+import Toast from "react-native-toast-message";
+
+type FormData = {
+  email: string;
+  otp: string;
+};
 
 export default function VerifyOTP() {
   type Navigation = NativeStackNavigationProp<AuthStackParamList, "SendOTP">;
@@ -26,7 +32,12 @@ export default function VerifyOTP() {
     Poppins_700Bold,
   });
 
-  const { email, sendOtp } = useAuthStore();
+  const { email, sendOtp, verifyOtp, loading } = useAuthStore();
+
+  const [otpPayload, setOtpPayload] = useState({
+    email: email,
+    otp: "",
+  });
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -61,8 +72,35 @@ export default function VerifyOTP() {
     return null;
   }
 
-  const submit = (otp: string) => {
-    console.log(otp);
+  const handleOnFilled = (otp: string) => {
+    setOtpPayload({ ...otpPayload, otp });
+  };
+
+  const submit = async (otpPayload: FormData) => {
+    try {
+      if (email) {
+        const token = await verifyOtp(otpPayload);
+        if (token) {
+          Toast.show({
+            type: "success",
+            text1: `VERIFY SUCCESSFUL`,
+            visibilityTime: 3000,
+            autoHide: true,
+            position: "top",
+          });
+        }
+      }
+    } catch (err: any) {
+      Toast.show({
+        type: "error",
+        text1: `INVALID OTP`,
+        text2: err.message,
+        visibilityTime: 3000,
+        autoHide: true,
+
+        position: "top",
+      });
+    }
   };
 
   return (
@@ -105,7 +143,7 @@ export default function VerifyOTP() {
         </Text>
         <OtpInput
           numberOfDigits={6}
-          onFilled={(otp) => submit(otp)}
+          onFilled={(otp) => handleOnFilled(otp)}
           focusColor={"#FF9500"}
           theme={{
             pinCodeContainerStyle: styles.pinCodeContainer,
@@ -126,15 +164,18 @@ export default function VerifyOTP() {
         </View>
         <Button
           mode="contained"
-          onPress={() => {}}
+          onPress={() => submit(otpPayload as FormData)}
           style={{ marginTop: 10 }}
           buttonColor="#FF9500"
+          disabled={loading}
+          loading={loading}
         >
           <Text style={{ fontFamily: "Poppins_700Bold", color: "white" }}>
             VERIFY
           </Text>
         </Button>
       </View>
+      <Toast />
     </View>
   );
 }

@@ -18,14 +18,20 @@ type SendOtpPayload = {
   email: string;
 };
 
+type VerifyOtpPayload = {
+  email: string;
+  otp: string;
+};
+
 type AuthStore = {
   loading: boolean;
   token: string | null;
   error: string | null;
   email: string | null;
-  login: (payload: LoginPayload) => Promise<string | null>;
+  login: (payload: LoginPayload) => Promise<string>;
   register: (payload: RegisterPayload) => Promise<void>;
   sendOtp: (payload: SendOtpPayload) => Promise<void>;
+  verifyOtp: (payload: VerifyOtpPayload) => Promise<string>;
 };
 
 export const useAuthStore = create<AuthStore>((set) => ({
@@ -110,6 +116,33 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
       const data = await response.json();
       set({ email });
+    } catch (err: any) {
+      set({ error: err.msg });
+      throw err;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  verifyOtp: async ({ email, otp }) => {
+    set({ loading: true, error: null });
+
+    try {
+      const response = await fetch(`${BASE_URL}/customer/verify-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, otp }),
+      });
+
+      if (!response.ok) {
+        throw new Error("PLEASE TRY AGAIN");
+      }
+
+      const data = await response.json();
+      set({ token: data.token });
+      return data.token;
     } catch (err: any) {
       set({ error: err.msg });
       throw err;
