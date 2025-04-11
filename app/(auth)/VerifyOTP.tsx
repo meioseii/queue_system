@@ -12,6 +12,7 @@ import { AuthStackParamList } from "../types";
 import { StatusBar } from "expo-status-bar";
 import { SplashScreen } from "expo-router";
 import { OtpInput } from "react-native-otp-entry";
+import { useAuthStore } from "../store/auth-store";
 
 export default function VerifyOTP() {
   type Navigation = NativeStackNavigationProp<AuthStackParamList, "SendOTP">;
@@ -24,6 +25,8 @@ export default function VerifyOTP() {
     Poppins_400Regular,
     Poppins_700Bold,
   });
+
+  const { email } = useAuthStore();
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -87,7 +90,7 @@ export default function VerifyOTP() {
           }}
         />
         <Text style={{ fontFamily: "Poppins_400Regular", marginVertical: 5 }}>
-          We’ve sent the OTP code to your email.
+          We’ve sent the OTP code to {email}.
         </Text>
         <Text
           style={{

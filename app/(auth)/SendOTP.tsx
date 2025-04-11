@@ -36,9 +36,9 @@ export default function SendOTP() {
 
   const { sendOtp, loading } = useAuthStore();
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = async (data: FormData) => {
     try {
-      sendOtp({ email: data.email });
+      await sendOtp({ email: data.email });
       navigation.navigate("VerifyOTP");
     } catch (err: any) {
       Toast.show({
