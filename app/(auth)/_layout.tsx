@@ -6,10 +6,27 @@ import Register from "./Register";
 import Success from "./Success";
 import SendOTP from "./SendOTP";
 import VerifyOTP from "./VerifyOTP";
+import { useAuthStore } from "../store/auth-store";
+import ChangePassword from "./ChangePassword";
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 export default function AuthLayout() {
+  const { changePasswordToken } = useAuthStore();
+
+  if (changePasswordToken) {
+    return (
+      <NavigationIndependentTree>
+        <Stack.Navigator>
+          <Stack.Screen
+            name="ChangePassword"
+            component={ChangePassword}
+            options={{ headerShown: false }}
+          />
+        </Stack.Navigator>
+      </NavigationIndependentTree>
+    );
+  }
   return (
     <NavigationIndependentTree>
       <Stack.Navigator>

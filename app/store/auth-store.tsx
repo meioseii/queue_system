@@ -23,20 +23,28 @@ type VerifyOtpPayload = {
   otp: string;
 };
 
+type ChangePasswordPayload = {
+  email: string;
+  newPassword: string;
+};
+
 type AuthStore = {
   loading: boolean;
   token: string | null;
+  changePasswordToken: string | null;
   error: string | null;
   email: string | null;
   login: (payload: LoginPayload) => Promise<string>;
   register: (payload: RegisterPayload) => Promise<void>;
   sendOtp: (payload: SendOtpPayload) => Promise<void>;
   verifyOtp: (payload: VerifyOtpPayload) => Promise<string>;
+  changePassword: (payload: ChangePasswordPayload) => Promise<void>;
 };
 
 export const useAuthStore = create<AuthStore>((set) => ({
   loading: false,
   token: null,
+  changePasswordToken: null,
   error: null,
   email: null,
 
@@ -89,7 +97,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
         throw new Error("PLEASE TRY AGAIN LATER");
       }
 
-      const data = await response.json();
+      await response.json();
     } catch (err: any) {
       set({ error: err.msg });
       throw err;
@@ -111,10 +119,10 @@ export const useAuthStore = create<AuthStore>((set) => ({
       });
 
       if (!response.ok) {
-        throw new Error("PLEASE TRY AGAIN LATER");
+        throw new Error("RESET PASSWORD FAILED");
       }
 
-      const data = await response.json();
+      await response.json();
       set({ email });
     } catch (err: any) {
       set({ error: err.msg });
@@ -141,8 +149,40 @@ export const useAuthStore = create<AuthStore>((set) => ({
       }
 
       const data = await response.json();
-      set({ token: data.token });
+      set({ changePasswordToken: data.token });
       return data.token;
+    } catch (err: any) {
+      set({ error: err.msg });
+      throw err;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  changePassword: async ({ email, newPassword }) => {
+    set({ loading: true, error: null });
+    const { changePasswordToken } = useAuthStore.getState();
+
+    try {
+      const response = await fetch(`${BASE_URL}/customer/change-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${changePasswordToken}`,
+        },
+        body: JSON.stringify({ email, newPassword }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.log("Change Password Error:", errorData); // <-- important
+        throw new Error(
+          errorData.message || "PASSWORD CANNOT BE CHANGED TO CURRENT PASSWORD"
+        );
+      }
+
+      await response.json();
+      set({ changePasswordToken: null });
     } catch (err: any) {
       set({ error: err.msg });
       throw err;

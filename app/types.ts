@@ -4,5 +4,6 @@ export type AuthStackParamList = {
   Success: undefined;
   SendOTP: undefined;
   VerifyOTP: undefined;
+  ChangePassword: undefined;
   // Add other screens here if needed
 };
