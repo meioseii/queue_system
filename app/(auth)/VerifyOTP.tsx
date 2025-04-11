@@ -26,7 +26,7 @@ export default function VerifyOTP() {
     Poppins_700Bold,
   });
 
-  const { email } = useAuthStore();
+  const { email, sendOtp } = useAuthStore();
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -43,11 +43,12 @@ export default function VerifyOTP() {
   }, [countdown]);
 
   const resendCode = () => {
-    console.log("Resending OTP...");
     setCountdown(30);
     setIsResendDisabled(true);
 
-    // TODO: Call API to resend OTP
+    if (email) {
+      sendOtp({ email });
+    }
   };
 
   useEffect(() => {
