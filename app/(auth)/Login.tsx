@@ -7,12 +7,14 @@ import {
   Poppins_700Bold,
 } from "@expo-google-fonts/poppins";
 import { TextInput, Button, Text } from "react-native-paper";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
-import { useEffect, useState } from "react";
+import { View, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AuthStackParamList } from "../types";
 import { useForm, Controller } from "react-hook-form";
+import { useAuthStore } from "../store/auth-store";
+import Toast from "react-native-toast-message";
 
 const blurhash =
   "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
@@ -38,9 +40,35 @@ export default function Login() {
     formState: { errors },
   } = useForm<FormData>();
 
-  const onSubmit = (data: FormData) => {
-    console.log("Login Form Data:", data);
-  };
+  const { login, loading } = useAuthStore();
+
+  const onSubmit = useCallback(
+    async (data: FormData) => {
+      try {
+        const token = await login(data);
+        if (token) {
+          Toast.show({
+            type: "success",
+            text1: `LOGIN SUCCESSFUL`,
+            visibilityTime: 3000,
+            autoHide: true,
+            position: "top",
+          });
+        }
+      } catch (err: any) {
+        Toast.show({
+          type: "error",
+          text1: `LOGIN FAILED`,
+          text2: err.message,
+          visibilityTime: 3000,
+          autoHide: true,
+
+          position: "top",
+        });
+      }
+    },
+    [login]
+  );
 
   useEffect(() => {
     if (loaded || error) {
@@ -139,7 +167,10 @@ export default function Login() {
             marginTop: 10,
           }}
         >
-          <TouchableOpacity onPress={() => navigation.navigate("SendOTP")}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("SendOTP")}
+            disabled={loading}
+          >
             <Text style={[{ fontSize: 16 }, styles.pressableText]}>
               Forgot Password?
             </Text>
@@ -152,6 +183,8 @@ export default function Login() {
           onPress={handleSubmit(onSubmit)}
           style={[styles.input, { marginTop: 10, bottom: 50 }]}
           buttonColor="#FF9500"
+          loading={loading}
+          disabled={loading}
         >
           <Text style={{ fontFamily: "Poppins_700Bold", color: "white" }}>
             LOGIN
@@ -163,13 +196,17 @@ export default function Login() {
           >
             Don't have an account?{" "}
           </Text>
-          <TouchableOpacity onPress={() => navigation.navigate("Register")}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Register")}
+            disabled={loading}
+          >
             <Text style={[{ fontSize: 16 }, styles.pressableText]}>
               Register
             </Text>
           </TouchableOpacity>
         </View>
       </View>
+      <Toast />
     </View>
   );
 }
