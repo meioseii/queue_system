@@ -1,11 +1,12 @@
 import { create } from "zustand";
 
-const BASE_URL = "https://iqueue-eor5.onrender.com";
+const BASE_URL = "http://54.79.103.51:8080";
 
 type LoginPayload = {
   username: string;
   password: string;
 };
+
 type RegisterPayload = {
   username: string;
   password: string;
@@ -33,12 +34,14 @@ type AuthStore = {
   token: string | null;
   changePasswordToken: string | null;
   error: string | null;
+  message: string | null;
   email: string | null;
   login: (payload: LoginPayload) => Promise<string>;
   register: (payload: RegisterPayload) => Promise<void>;
   sendOtp: (payload: SendOtpPayload) => Promise<void>;
   verifyOtp: (payload: VerifyOtpPayload) => Promise<string>;
   changePassword: (payload: ChangePasswordPayload) => Promise<void>;
+  logout: () => void;
 };
 
 export const useAuthStore = create<AuthStore>((set) => ({
@@ -46,6 +49,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
   token: null,
   changePasswordToken: null,
   error: null,
+  message: null,
   email: null,
 
   login: async ({ username, password }) => {
@@ -54,21 +58,20 @@ export const useAuthStore = create<AuthStore>((set) => ({
     try {
       const response = await fetch(`${BASE_URL}/customer/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("INVALID CREDENTIALS");
+        throw new Error(data.msg || "Login failed. Please try again.");
       }
 
-      const data = await response.json();
       set({ token: data.token });
       return data.token;
     } catch (err: any) {
-      set({ error: err.msg });
+      set({ error: err.message });
       throw err;
     } finally {
       set({ loading: false });
@@ -79,11 +82,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
     set({ loading: true, error: null });
 
     try {
-      const response = await fetch(`${BASE_URL}/customer/new-customer`, {
+      const response = await fetch(`${BASE_URL}/customer/register`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           first_name,
           last_name,
@@ -93,13 +94,13 @@ export const useAuthStore = create<AuthStore>((set) => ({
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("PLEASE TRY AGAIN LATER");
-      }
+      const data = await response.json();
 
-      await response.json();
+      if (!response.ok) {
+        throw new Error(data.msg || "Registration failed. Please try again.");
+      }
     } catch (err: any) {
-      set({ error: err.msg });
+      set({ error: err.message });
       throw err;
     } finally {
       set({ loading: false });
@@ -112,20 +113,19 @@ export const useAuthStore = create<AuthStore>((set) => ({
     try {
       const response = await fetch(`${BASE_URL}/customer/send-otp`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("RESET PASSWORD FAILED");
+        throw new Error(data.msg || "OTP request failed. Please try again.");
       }
 
-      await response.json();
-      set({ email });
+      set({ email: data.email });
     } catch (err: any) {
-      set({ error: err.msg });
+      set({ error: err.message });
       throw err;
     } finally {
       set({ loading: false });
@@ -138,21 +138,20 @@ export const useAuthStore = create<AuthStore>((set) => ({
     try {
       const response = await fetch(`${BASE_URL}/customer/verify-otp`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("PLEASE TRY AGAIN");
+        throw new Error(data.msg || "OTP invalid. Please try again.");
       }
 
-      const data = await response.json();
       set({ changePasswordToken: data.token });
       return data.token;
     } catch (err: any) {
-      set({ error: err.msg });
+      set({ error: err.message });
       throw err;
     } finally {
       set({ loading: false });
@@ -173,21 +172,27 @@ export const useAuthStore = create<AuthStore>((set) => ({
         body: JSON.stringify({ email, newPassword }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        console.log("Change Password Error:", errorData); // <-- important
         throw new Error(
-          errorData.message || "PASSWORD CANNOT BE CHANGED TO CURRENT PASSWORD"
+          data.msg || "Change password failed. Please try again."
         );
       }
 
-      await response.json();
       set({ changePasswordToken: null });
     } catch (err: any) {
-      set({ error: err.msg });
+      set({ error: err.message });
       throw err;
     } finally {
       set({ loading: false });
     }
+  },
+
+  logout: () => {
+    set({ token: null });
+    // Optionally, clear any other related state or perform additional cleanup here
+    // For example, you might want to clear user data from local storage or reset other stores
+    // localStorage.removeItem("userData"); // Example for clearing local storage
   },
 }));
