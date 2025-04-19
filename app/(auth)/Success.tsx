@@ -11,7 +11,7 @@ import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { AuthStackParamList } from "../types";
+import { AuthStackParamList } from "../auth-types";
 import { useForm, Controller } from "react-hook-form";
 
 const blurhash =

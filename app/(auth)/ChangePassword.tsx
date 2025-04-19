@@ -8,7 +8,7 @@ import {
 import { TextInput, Button, Text, Icon } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { AuthStackParamList } from "../types";
+import { AuthStackParamList } from "../auth-types";
 import { useForm, Controller } from "react-hook-form";
 import { StatusBar } from "expo-status-bar";
 import { SplashScreen } from "expo-router";
@@ -193,7 +193,6 @@ export default function ChangePassword() {
           </Text>
         </Button>
       </View>
-      <Toast />
     </View>
   );
 }

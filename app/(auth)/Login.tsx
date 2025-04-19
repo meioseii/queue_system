@@ -11,7 +11,7 @@ import { View, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { AuthStackParamList } from "../types";
+import { AuthStackParamList } from "../auth-types";
 import { useForm, Controller } from "react-hook-form";
 import { useAuthStore } from "../store/auth-store";
 import Toast from "react-native-toast-message";
@@ -40,7 +40,7 @@ export default function Login() {
     formState: { errors },
   } = useForm<FormData>();
 
-  const { login, loading } = useAuthStore();
+  const { login, loading, message } = useAuthStore();
 
   const onSubmit = useCallback(
     async (data: FormData) => {
@@ -55,6 +55,7 @@ export default function Login() {
             position: "top",
           });
         }
+        console.log(data);
       } catch (err: any) {
         Toast.show({
           type: "error",
@@ -65,6 +66,7 @@ export default function Login() {
 
           position: "top",
         });
+        console.log(err);
       }
     },
     [login]

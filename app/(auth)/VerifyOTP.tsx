@@ -8,7 +8,7 @@ import {
 import { Button, Text, Icon } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { AuthStackParamList } from "../types";
+import { AuthStackParamList } from "../auth-types";
 import { StatusBar } from "expo-status-bar";
 import { SplashScreen } from "expo-router";
 import { OtpInput } from "react-native-otp-entry";
@@ -169,7 +169,6 @@ export default function VerifyOTP() {
           </Text>
         </Button>
       </View>
-      <Toast />
     </View>
   );
 }

@@ -8,7 +8,7 @@ import {
 import { TextInput, Button, Text, Icon } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { AuthStackParamList } from "../types";
+import { AuthStackParamList } from "../auth-types";
 import { useForm, Controller } from "react-hook-form";
 import { StatusBar } from "expo-status-bar";
 import { SplashScreen } from "expo-router";
@@ -43,8 +43,8 @@ export default function SendOTP() {
     } catch (err: any) {
       Toast.show({
         type: "error",
-        text1: err.message,
-        text2: "NO ACCOUNT ASSOCIATED WITH THIS EMAIL ADDRESS",
+        text1: "REQUEST FAILED",
+        text2: err.message,
         visibilityTime: 3000,
         autoHide: true,
         position: "top",
@@ -134,7 +134,6 @@ export default function SendOTP() {
           </Text>
         </Button>
       </View>
-      <Toast />
     </View>
   );
 }

@@ -24,7 +24,7 @@ import Toast from "react-native-toast-message";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { AuthStackParamList } from "../types";
+import { AuthStackParamList } from "../auth-types";
 import { useForm, Controller } from "react-hook-form";
 
 const blurhash =
@@ -55,10 +55,11 @@ export default function Register() {
     formState: { errors },
   } = useForm<FormData>();
 
-  const { register, loading } = useAuthStore();
+  const { register, loading, message } = useAuthStore();
 
   const onSubmit = useCallback(
     async (data: FormData) => {
+      console.log(data);
       try {
         await register(data);
         navigation.navigate("Success");
