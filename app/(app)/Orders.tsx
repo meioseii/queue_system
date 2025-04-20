@@ -17,7 +17,7 @@ import { useAuthStore } from "../store/auth-store";
 const blurhash =
   "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
 
-export default function Home() {
+export default function Orders() {
   type Navigation = NativeStackNavigationProp<AppStackParamList, "Login">;
   const navigation = useNavigation<Navigation>();
   const { logout } = useAuthStore();
@@ -45,7 +45,7 @@ export default function Home() {
     <View>
       <StatusBar hidden={true}></StatusBar>
       <TouchableOpacity onPress={() => onLogout()}>
-        <Text>Home</Text>
+        <Text>Orders</Text>
       </TouchableOpacity>
     </View>
   );
