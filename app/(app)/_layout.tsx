@@ -1,4 +1,4 @@
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, TouchableWithoutFeedback } from "react-native";
 import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import {
@@ -33,7 +33,10 @@ export function Tabs() {
           borderTopStartRadius: 20,
           borderRadius: 0,
         },
+        freezeOnBlur: true,
       }}
+      backBehavior="history"
+      detachInactiveScreens={false}
     >
       <Tab.Screen
         name="Home"
@@ -86,12 +89,12 @@ export function Tabs() {
         component={Profile}
         options={{
           headerShown: false,
-          title: "Settings",
+          title: "Profile",
           tabBarLabelStyle: {
             fontFamily: "Poppins_400Regular",
           },
           tabBarIcon: ({ color }) => (
-            <FontAwesome size={24} name="cog" color={color} />
+            <MaterialIcons name="manage-accounts" size={24} color={color} />
           ),
         }}
       />
