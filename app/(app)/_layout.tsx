@@ -1,4 +1,9 @@
-import { StyleSheet, View, TouchableWithoutFeedback } from "react-native";
+import {
+  StyleSheet,
+  View,
+  TouchableWithoutFeedback,
+  Pressable,
+} from "react-native";
 import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import {
@@ -24,15 +29,45 @@ export function Tabs() {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: "#FAF9F6",
-        tabBarInactiveTintColor: "#FFFFFF",
+        tabBarActiveBackgroundColor: "#FF9500",
+        tabBarActiveTintColor: "#FF9500",
         tabBarStyle: {
-          backgroundColor: "#FF9500",
-          borderColor: "transparent",
-          borderTopEndRadius: 20,
-          borderTopStartRadius: 20,
-          borderRadius: 0,
+          borderTopEndRadius: 15,
+          borderTopStartRadius: 15,
+          borderBottomEndRadius: 15,
+          borderBottomStartRadius: 15,
+          marginHorizontal: 15,
+          height: 50,
+          position: "absolute",
+          bottom: 20,
         },
+        tabBarButton: (props) => (
+          <View
+            style={{
+              flex: 1,
+              borderRadius: 15,
+              overflow: "hidden",
+              marginHorizontal: 2,
+            }}
+          >
+            <Pressable
+              {...props}
+              android_ripple={{
+                color: "transparent",
+                borderless: false,
+                radius: 1,
+              }}
+              style={({ pressed }) => [
+                {
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  opacity: pressed ? 0.8 : 1,
+                },
+              ]}
+            />
+          </View>
+        ),
         freezeOnBlur: true,
       }}
       backBehavior="history"
@@ -46,11 +81,12 @@ export function Tabs() {
           title: "Reservation",
           tabBarLabelStyle: {
             fontFamily: "Poppins_400Regular",
+            fontSize: 8,
           },
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons
               name="calendar-clock"
-              size={24}
+              size={18}
               color={color}
             />
           ),
@@ -64,9 +100,10 @@ export function Tabs() {
           title: "Menu",
           tabBarLabelStyle: {
             fontFamily: "Poppins_400Regular",
+            fontSize: 8,
           },
           tabBarIcon: ({ color }) => (
-            <MaterialIcons name="fastfood" size={24} color={color} />
+            <MaterialIcons name="fastfood" size={18} color={color} />
           ),
         }}
       />
@@ -78,9 +115,10 @@ export function Tabs() {
           title: "Orders",
           tabBarLabelStyle: {
             fontFamily: "Poppins_400Regular",
+            fontSize: 8,
           },
           tabBarIcon: ({ color }) => (
-            <FontAwesome5 name="concierge-bell" size={24} color={color} />
+            <FontAwesome5 name="concierge-bell" size={18} color={color} />
           ),
         }}
       />
@@ -89,12 +127,13 @@ export function Tabs() {
         component={Profile}
         options={{
           headerShown: false,
-          title: "Profile",
+          title: "Account",
           tabBarLabelStyle: {
             fontFamily: "Poppins_400Regular",
+            fontSize: 8,
           },
           tabBarIcon: ({ color }) => (
-            <MaterialIcons name="manage-accounts" size={24} color={color} />
+            <MaterialIcons name="manage-accounts" size={18} color={color} />
           ),
         }}
       />
