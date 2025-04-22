@@ -1,9 +1,8 @@
 export type AppStackParamList = {
-  Login: undefined;
-  Register: undefined;
-  Success: undefined;
-  SendOTP: undefined;
-  VerifyOTP: undefined;
-  ChangePassword: undefined;
+  Home: undefined;
+  Menu: undefined;
+  Orders: undefined;
+  Profile: undefined;
+
   // Add other screens here if needed
 };
