@@ -3,6 +3,7 @@ import {
   View,
   TouchableWithoutFeedback,
   Pressable,
+  TouchableOpacity,
 } from "react-native";
 import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -14,14 +15,20 @@ import {
 import {
   NavigationContainer,
   NavigationIndependentTree,
+  useNavigation,
 } from "@react-navigation/native";
 import Home from "./Home";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import {
+  createNativeStackNavigator,
+  NativeStackNavigationProp,
+} from "@react-navigation/native-stack";
 import Orders from "./Orders";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Menu from "./Menu";
 import Profile from "./Profile";
+import MenuItems from "./screens/MenuItems";
+import { AppStackParamList } from "../app-types";
 
 const Tab = createBottomTabNavigator();
 
@@ -144,6 +151,8 @@ export function Tabs() {
 const Stack = createNativeStackNavigator();
 
 export default function AppLayout() {
+  type Navigation = NativeStackNavigationProp<AppStackParamList>;
+  const navigation = useNavigation<Navigation>();
   return (
     <NavigationIndependentTree>
       <Stack.Navigator>
@@ -151,6 +160,23 @@ export default function AppLayout() {
           name="Tabs"
           component={Tabs}
           options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="MenuItems" // should be the category name :params
+          component={MenuItems}
+          options={{
+            title: "Menu Items",
+            headerShown: true,
+            headerStyle: {
+              backgroundColor: "#FF9500",
+            },
+            headerTitleStyle: {
+              fontFamily: "Poppins_400Regular",
+              fontSize: 16,
+              color: "#FFF",
+            },
+            headerTintColor: "#FFF",
+          }}
         />
       </Stack.Navigator>
     </NavigationIndependentTree>
