@@ -18,7 +18,7 @@ const blurhash =
   "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
 
 export default function Home() {
-  type Navigation = NativeStackNavigationProp<AppStackParamList, "Login">;
+  type Navigation = NativeStackNavigationProp<AppStackParamList>;
   const navigation = useNavigation<Navigation>();
   const { logout } = useAuthStore();
 
@@ -43,9 +43,9 @@ export default function Home() {
 
   return (
     <View>
-      <StatusBar hidden={true}></StatusBar>
+      <StatusBar hidden={false} backgroundColor="#FF9500"></StatusBar>
       <TouchableOpacity onPress={() => onLogout()}>
-        <Text>Home</Text>
+        <Text style={{ marginTop: 40 }}>Home</Text>
       </TouchableOpacity>
     </View>
   );

@@ -43,9 +43,9 @@ export default function Profile() {
 
   return (
     <View>
-      <StatusBar hidden={true}></StatusBar>
+      <StatusBar hidden={false} backgroundColor="#FF9500"></StatusBar>
       <TouchableOpacity onPress={() => onLogout()}>
-        <Text>Profile</Text>
+        <Text style={{ marginTop: 40 }}>Profile</Text>
       </TouchableOpacity>
     </View>
   );

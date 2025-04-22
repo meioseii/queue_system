@@ -43,9 +43,9 @@ export default function Menu() {
 
   return (
     <View>
-      <StatusBar hidden={true}></StatusBar>
+      <StatusBar hidden={false} backgroundColor="#FF9500"></StatusBar>
       <TouchableOpacity onPress={() => onLogout()}>
-        <Text>Menu</Text>
+        <Text style={{ marginTop: 40 }}>Menu</Text>
       </TouchableOpacity>
     </View>
   );

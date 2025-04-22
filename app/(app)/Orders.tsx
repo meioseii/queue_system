@@ -43,9 +43,9 @@ export default function Orders() {
 
   return (
     <View>
-      <StatusBar hidden={true}></StatusBar>
+      <StatusBar hidden={false} backgroundColor="#FF9500"></StatusBar>
       <TouchableOpacity onPress={() => onLogout()}>
-        <Text>Orders</Text>
+        <Text style={{ marginTop: 40 }}>Orders</Text>
       </TouchableOpacity>
     </View>
   );
