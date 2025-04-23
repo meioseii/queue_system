@@ -85,6 +85,8 @@ export const useAppStore = create<AppStore>((set) => ({
     } catch (error: any) {
       set({ error: error.message }); // Set the error message
       console.error("Failed to fetch reservations:", error);
+    } finally {
+      set({ loading: false, error: null });
     }
   },
 
@@ -117,6 +119,8 @@ export const useAppStore = create<AppStore>((set) => ({
     } catch (error: any) {
       set({ error: error.message }); // Set the error message
       throw error; // Re-throw the error if needed
+    } finally {
+      set({ loading: false, error: null });
     }
   },
 }));
