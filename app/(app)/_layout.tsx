@@ -1,11 +1,5 @@
-import {
-  StyleSheet,
-  View,
-  TouchableWithoutFeedback,
-  Pressable,
-  TouchableOpacity,
-} from "react-native";
-import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
+import { StyleSheet, View, Pressable } from "react-native";
+import { FontAwesome5 } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import {
   useFonts,
@@ -13,7 +7,6 @@ import {
   Poppins_700Bold,
 } from "@expo-google-fonts/poppins";
 import {
-  NavigationContainer,
   NavigationIndependentTree,
   useNavigation,
 } from "@react-navigation/native";
@@ -44,7 +37,7 @@ export function Tabs() {
           borderBottomEndRadius: 15,
           borderBottomStartRadius: 15,
           marginHorizontal: 15,
-          height: 50,
+          height: 55,
           position: "absolute",
           bottom: 20,
         },
@@ -78,7 +71,6 @@ export function Tabs() {
         freezeOnBlur: true,
       }}
       backBehavior="history"
-      detachInactiveScreens={false}
     >
       <Tab.Screen
         name="Home"
