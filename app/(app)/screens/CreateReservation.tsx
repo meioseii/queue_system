@@ -192,6 +192,7 @@ export default function CreateReservation() {
                       "Please select a time between 10:00 AM and 10:00 PM.",
                     visibilityTime: 3000,
                     autoHide: true,
+                    position: "bottom",
                   });
                   setTimePickerVisibility(false); // Ensure the picker can be reopened
                   return;
