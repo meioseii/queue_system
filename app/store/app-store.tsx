@@ -18,6 +18,7 @@ type AppStore = {
     table_number: number;
     reservation_date: string;
   }) => Promise<void>;
+  cancelReservation: (payload: { reservation_id: string }) => Promise<void>;
 };
 
 export const useAppStore = create<AppStore>((set) => ({
@@ -84,7 +85,6 @@ export const useAppStore = create<AppStore>((set) => ({
       set({ reservations: transformedReservations });
     } catch (error: any) {
       set({ error: error.message }); // Set the error message
-      console.error("Failed to fetch reservations:", error);
     } finally {
       set({ loading: false, error: null });
     }
@@ -112,15 +112,43 @@ export const useAppStore = create<AppStore>((set) => ({
         throw new Error(data.msg || `HTTP error! status: ${response.status}`);
       }
 
-      console.log("Reservation Created:", data);
-
-      // Optionally, you can refetch reservations after creating one
       await useAppStore.getState().fetchReservations();
     } catch (error: any) {
       set({ error: error.message }); // Set the error message
       throw error; // Re-throw the error if needed
     } finally {
       set({ loading: false, error: null });
+    }
+  },
+
+  cancelReservation: async (payload) => {
+    set({ loading: true, error: null }); // Clear previous errors
+    try {
+      const { token } = useAuthStore.getState(); // Get the token from auth-store
+
+      const response = await fetch(
+        `http://54.79.103.51:8080/reservation/cancel`,
+        {
+          method: "PATCH", // Use PATCH as specified
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // Include the token in the Authorization header
+          },
+          body: JSON.stringify(payload), // Send the payload as JSON
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.msg || `HTTP error! status: ${response.status}`);
+      }
+
+      await useAppStore.getState().fetchReservations();
+    } catch (error: any) {
+      set({ error: error.message }); // Set the error message
+      throw error; // Re-throw the error if needed
+    } finally {
+      set({ loading: false });
     }
   },
 }));

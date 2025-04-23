@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { Button, Text } from "react-native-paper";
-import { View, StyleSheet, Modal, Pressable } from "react-native";
+import { View, StyleSheet, Modal, TouchableOpacity } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { useAppStore } from "../store/app-store";
 import { AppStackParamList } from "../app-types";
@@ -11,6 +11,7 @@ import { useNavigation } from "expo-router";
 type Reservation = {
   table_number: number;
   reservation_date: string;
+  reservation_id: string;
   num_people: number;
   status: string;
 };
@@ -23,7 +24,7 @@ export default function Home() {
   const [selectedReservation, setSelectedReservation] =
     useState<Reservation | null>(null);
 
-  const { reservations, fetchReservations } = useAppStore(); // Use app-store for reservations
+  const { reservations, fetchReservations, loading } = useAppStore(); // Use app-store for reservations
 
   // Fetch reservations on component mount
   useEffect(() => {
@@ -35,6 +36,33 @@ export default function Home() {
     if (reservations[day.dateString]?.length) {
       setSelectedReservation(reservations[day.dateString][0]); // Select the first reservation for simplicity
       setModalVisible(true);
+    }
+  };
+
+  const handleCancelReservation = async (reservation_id: string) => {
+    console.log("Attempting to cancel reservation with ID:", reservation_id);
+    const payload = { reservation_id }; // Wrap reservation_id in an objectconst payload = { reservation_id }; // Wrap reservation_id in an object
+    try {
+      await useAppStore.getState().cancelReservation(payload);
+      console.log(`Reservation ${reservation_id} canceled successfully.`);
+      setModalVisible(false); // Close the modal after canceling
+      Toast.show({
+        type: "error",
+        text1: "RESERVATION CANCELLATION SUCCESSFUL",
+        visibilityTime: 3000,
+        autoHide: true,
+      });
+    } catch (error: any) {
+      console.log(payload);
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: error.message.includes("404")
+          ? "Reservation not found."
+          : error.message,
+        visibilityTime: 3000,
+        autoHide: true,
+      });
     }
   };
 
@@ -97,12 +125,27 @@ export default function Home() {
                 No reservation details available.
               </Text>
             )}
-            <Pressable
+
+            {/* Cancel Button */}
+            <TouchableOpacity
+              style={[styles.cancelButton, { marginBottom: 10 }]}
+              onPress={() =>
+                selectedReservation &&
+                handleCancelReservation(selectedReservation.reservation_id)
+              }
+              loading={loading}
+              disabled={loading}
+            >
+              <Text style={styles.cancelButtonText}>Cancel Reservation</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setModalVisible(false)}
+              disabled={loading}
             >
               <Text style={styles.closeButtonText}>Close</Text>
-            </Pressable>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -210,5 +253,17 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontFamily: "Poppins_700Bold",
+  },
+  cancelButton: {
+    backgroundColor: "#FF0000",
+    paddingVertical: 10,
+    borderRadius: 5,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  cancelButtonText: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 14,
+    color: "#FFF",
   },
 });
