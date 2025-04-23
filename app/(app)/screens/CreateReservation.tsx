@@ -7,6 +7,9 @@ import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { useAppStore } from "@/app/store/app-store";
 import { Image } from "expo-image";
 import Toast from "react-native-toast-message";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { AppStackParamList } from "../../app-types";
 
 const blurhash =
   "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
@@ -18,6 +21,11 @@ type FormData = {
 };
 
 export default function CreateReservation() {
+  type Navigation = NativeStackNavigationProp<
+    AppStackParamList,
+    "CreateReservation"
+  >;
+  const navigation = useNavigation<Navigation>();
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [isTimePickerVisible, setTimePickerVisibility] = useState(false);
 
@@ -54,6 +62,7 @@ export default function CreateReservation() {
 
       try {
         await useAppStore.getState().createReservation(payload);
+        navigation.navigate("SuccessReservation");
       } catch (err) {
         Toast.show({
           type: "error",

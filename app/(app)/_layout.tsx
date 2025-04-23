@@ -23,6 +23,7 @@ import Profile from "./Profile";
 import MenuItems from "./screens/MenuItems";
 import { AppStackParamList } from "../app-types";
 import CreateReservation from "./screens/CreateReservation";
+import SuccessReservation from "./screens/SuccessReservation";
 
 const Tab = createBottomTabNavigator();
 
@@ -187,6 +188,11 @@ export default function AppLayout() {
             },
             headerTintColor: "#FFF",
           }}
+        />
+        <Stack.Screen
+          name="SuccessReservation"
+          component={SuccessReservation}
+          options={{ headerShown: false }}
         />
       </Stack.Navigator>
     </NavigationIndependentTree>
