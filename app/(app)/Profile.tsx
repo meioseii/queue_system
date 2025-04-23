@@ -42,11 +42,11 @@ export default function Profile() {
   };
 
   return (
-    <View>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>Account</Text>
+      </View>
       <StatusBar hidden={false} backgroundColor="#FF9500"></StatusBar>
-      <TouchableOpacity onPress={() => onLogout()}>
-        <Text style={{ marginTop: 40 }}>Profile</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -55,34 +55,19 @@ const styles = StyleSheet.create({
   container: {
     height: "100%",
     backgroundColor: "#FAF9F6",
-  },
-  iconContainer: {
-    backgroundColor: "#FAF9F6",
-    height: "40%",
-    padding: "10%",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  icon: {
-    width: 120,
-    height: 120,
-  },
-  iconText: {
-    color: "#FF9500",
-    fontSize: 30,
-    fontFamily: "Poppins_700Bold",
-  },
-  checkMessage: {
+    marginTop: 36,
     display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 20,
-    bottom: 50,
   },
-  successMessage: {
+  header: {
+    backgroundColor: "#FF9500",
+    elevation: 5,
+    paddingLeft: 15,
+    paddingVertical: 10,
+    borderRadius: 0,
+  },
+  headerText: {
     fontFamily: "Poppins_400Regular",
-    letterSpacing: 0,
-    bottom: 10,
+    fontSize: 16,
+    color: "#fff",
   },
 });

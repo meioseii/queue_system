@@ -83,8 +83,8 @@ export default function Menu() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.menuHeader}>
-        <Text style={styles.menuHeaderText}>Menu</Text>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>Menu</Text>
       </View>
       <StatusBar hidden={false} backgroundColor="#FF9500"></StatusBar>
       <FlashList
@@ -114,6 +114,22 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAF9F6",
     marginTop: 36,
     display: "flex",
+  },
+  header: {
+    backgroundColor: "#FF9500",
+    elevation: 5,
+    paddingLeft: 15,
+    paddingVertical: 10,
+    borderRadius: 0,
+  },
+  headerText: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 16,
+    color: "#fff",
+  },
+  flashListContent: {
+    paddingTop: 10,
+    paddingBottom: 120,
   },
   card: {
     flex: 1,
@@ -148,21 +164,5 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_700Bold",
     fontSize: 14,
     color: "#FFF",
-  },
-  menuHeader: {
-    backgroundColor: "#FF9500",
-    elevation: 5,
-    paddingLeft: 15,
-    paddingVertical: 10,
-    borderRadius: 0,
-  },
-  menuHeaderText: {
-    fontFamily: "Poppins_400Regular",
-    fontSize: 16,
-    color: "#fff",
-  },
-  flashListContent: {
-    paddingTop: 10,
-    paddingBottom: 120,
   },
 });
