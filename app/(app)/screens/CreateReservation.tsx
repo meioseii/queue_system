@@ -68,7 +68,7 @@ export default function CreateReservation() {
       } catch (err) {
         Toast.show({
           type: "error",
-          text1: `ERROR CREATING RESERVATION:`,
+          text1: `ERROR CREATING RESERVATION`,
           text2: err.message,
           visibilityTime: 3000,
           autoHide: true,
@@ -137,6 +137,9 @@ export default function CreateReservation() {
             <DateTimePickerModal
               isVisible={isDatePickerVisible}
               mode="date"
+              minimumDate={
+                new Date(new Date().setDate(new Date().getDate() + 1))
+              } // Disable today and previous dates
               onConfirm={(selectedDate) => {
                 onChange(selectedDate);
                 setDatePickerVisibility(false);
@@ -177,6 +180,23 @@ export default function CreateReservation() {
               mode="time"
               is24Hour={false} // Use 12-hour format
               onConfirm={(selectedTime) => {
+                const hours = selectedTime.getHours();
+                const minutes = selectedTime.getMinutes();
+
+                // Restrict time to 10 AM - 10 PM
+                if (hours < 10 || (hours === 22 && minutes > 0) || hours > 22) {
+                  Toast.show({
+                    type: "error",
+                    text1: "Invalid Time",
+                    text2:
+                      "Please select a time between 10:00 AM and 10:00 PM.",
+                    visibilityTime: 3000,
+                    autoHide: true,
+                  });
+                  setTimePickerVisibility(false); // Ensure the picker can be reopened
+                  return;
+                }
+
                 onChange(selectedTime);
                 setTimePickerVisibility(false);
               }}
