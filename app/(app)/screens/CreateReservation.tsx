@@ -29,6 +29,8 @@ export default function CreateReservation() {
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [isTimePickerVisible, setTimePickerVisibility] = useState(false);
 
+  const { loading } = useAppStore();
+
   const {
     control,
     handleSubmit,
@@ -193,6 +195,8 @@ export default function CreateReservation() {
         onPress={handleSubmit(onSubmit)}
         style={styles.submitButton}
         buttonColor="#FF9500"
+        loading={loading}
+        disabled={loading}
       >
         Create Reservation
       </Button>

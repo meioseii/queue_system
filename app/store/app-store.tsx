@@ -9,6 +9,7 @@ type Reservation = {
 };
 
 type AppStore = {
+  loading: boolean;
   reservations: Record<string, Reservation[]>;
   error: string | null;
   fetchReservations: () => Promise<void>;
@@ -22,6 +23,7 @@ type AppStore = {
 export const useAppStore = create<AppStore>((set) => ({
   reservations: {},
   error: null,
+  loading: false,
 
   fetchReservations: async () => {
     set({ error: null }); // Clear previous errors
@@ -39,21 +41,29 @@ export const useAppStore = create<AppStore>((set) => ({
       );
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.msg || `HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(
+          errorData.msg || `HTTP error! status: ${response.status}`
+        );
       }
 
-      const data = await response.json();
+      const data = await response.text(); // Use text() instead of json() to handle empty responses
 
-      console.log("API Response:", data);
+      if (!data) {
+        console.warn("API returned an empty response.");
+        set({ reservations: {} }); // Set reservations to an empty object
+        return;
+      }
+
+      const parsedData = JSON.parse(data); // Parse the JSON response
 
       let reservationsArray: Reservation[] = [];
 
       // Handle single reservation object
-      if (data && !Array.isArray(data)) {
-        reservationsArray = [data]; // Wrap the single object in an array
-      } else if (Array.isArray(data)) {
-        reservationsArray = data; // Use the array directly
+      if (parsedData && !Array.isArray(parsedData)) {
+        reservationsArray = [parsedData]; // Wrap the single object in an array
+      } else if (Array.isArray(parsedData)) {
+        reservationsArray = parsedData; // Use the array directly
       } else {
         throw new Error("API response is not valid");
       }
@@ -75,12 +85,11 @@ export const useAppStore = create<AppStore>((set) => ({
     } catch (error: any) {
       set({ error: error.message }); // Set the error message
       console.error("Failed to fetch reservations:", error);
-      throw error; // Re-throw the error if needed
     }
   },
 
   createReservation: async (payload) => {
-    set({ error: null }); // Clear previous errors
+    set({ loading: true, error: null }); // Clear previous errors
     try {
       const { token } = useAuthStore.getState(); // Get the token from auth-store
       const response = await fetch(

@@ -68,8 +68,8 @@ export default function SuccessReservation() {
           placeholder={{ blurhash }}
           contentFit="cover"
         />
-        <Text style={{ fontFamily: "Poppins_700Bold" }}>
-          Account successfully created!
+        <Text style={{ fontFamily: "Poppins_700Bold", textAlign: "center" }}>
+          Your table has been successfully reserved.
         </Text>
         <Text style={styles.successMessage}>
           Thank you for choosing iQUEUE!
