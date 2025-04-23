@@ -4,6 +4,9 @@ import { Button, Text } from "react-native-paper";
 import { View, StyleSheet, Modal, Pressable } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { useAppStore } from "../store/app-store";
+import { AppStackParamList } from "../app-types";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useNavigation } from "expo-router";
 
 type Reservation = {
   table_number: number;
@@ -13,6 +16,8 @@ type Reservation = {
 };
 
 export default function Home() {
+  type Navigation = NativeStackNavigationProp<AppStackParamList, "Home">;
+  const navigation = useNavigation<Navigation>();
   const [selectedDate, setSelectedDate] = useState<string>(""); // Selected date
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedReservation, setSelectedReservation] =
@@ -106,7 +111,7 @@ export default function Home() {
       <View style={styles.buttonContainer}>
         <Button
           mode="contained"
-          onPress={() => console.log("Reserve a table")}
+          onPress={() => navigation.navigate("CreateReservation")}
           style={styles.button}
           labelStyle={styles.buttonText}
         >
