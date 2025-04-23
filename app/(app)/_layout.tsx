@@ -22,6 +22,7 @@ import Menu from "./Menu";
 import Profile from "./Profile";
 import MenuItems from "./screens/MenuItems";
 import { AppStackParamList } from "../app-types";
+import CreateReservation from "./screens/CreateReservation";
 
 const Tab = createBottomTabNavigator();
 
@@ -158,6 +159,23 @@ export default function AppLayout() {
           component={MenuItems}
           options={{
             title: "Menu Items",
+            headerShown: true,
+            headerStyle: {
+              backgroundColor: "#FF9500",
+            },
+            headerTitleStyle: {
+              fontFamily: "Poppins_400Regular",
+              fontSize: 16,
+              color: "#FFF",
+            },
+            headerTintColor: "#FFF",
+          }}
+        />
+        <Stack.Screen
+          name="CreateReservation" // should be the category name :params
+          component={CreateReservation}
+          options={{
+            title: "Create Reservation",
             headerShown: true,
             headerStyle: {
               backgroundColor: "#FF9500",
