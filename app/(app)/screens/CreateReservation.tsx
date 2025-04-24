@@ -65,10 +65,10 @@ export default function CreateReservation() {
       try {
         await useAppStore.getState().createReservation(payload);
         navigation.navigate("SuccessReservation");
-      } catch (err) {
+      } catch (err: any) {
         Toast.show({
           type: "error",
-          text1: `ERROR CREATING RESERVATION`,
+          text1: `FAILED CREATING RESERVATION`,
           text2: err.message,
           visibilityTime: 3000,
           autoHide: true,

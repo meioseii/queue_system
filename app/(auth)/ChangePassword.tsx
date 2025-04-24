@@ -50,7 +50,7 @@ export default function ChangePassword() {
       } catch (err: any) {
         Toast.show({
           type: "error",
-          text1: `CHANGE PASSWORD ERROR`,
+          text1: `FAILED TO UPDATE PASSWORD`,
           text2: err.message,
           visibilityTime: 3000,
           autoHide: true,
