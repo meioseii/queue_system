@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { Button, Text } from "react-native-paper";
-import { View, StyleSheet, Modal, TouchableOpacity } from "react-native";
+import { View, StyleSheet, Modal, TouchableOpacity, Alert } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { useAppStore } from "../store/app-store";
 import { AppStackParamList } from "../app-types";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "expo-router";
+import Toast from "react-native-toast-message";
 
 type Reservation = {
   table_number: number;
@@ -40,134 +41,148 @@ export default function Home() {
   };
 
   const handleCancelReservation = async (reservation_id: string) => {
-    console.log("Attempting to cancel reservation with ID:", reservation_id);
-    const payload = { reservation_id }; // Wrap reservation_id in an objectconst payload = { reservation_id }; // Wrap reservation_id in an object
-    try {
-      await useAppStore.getState().cancelReservation(payload);
-      console.log(`Reservation ${reservation_id} canceled successfully.`);
-      setModalVisible(false); // Close the modal after canceling
-      Toast.show({
-        type: "error",
-        text1: "RESERVATION CANCELLATION SUCCESSFUL",
-        visibilityTime: 3000,
-        autoHide: true,
-      });
-    } catch (error: any) {
-      console.log(payload);
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: error.message.includes("404")
-          ? "Reservation not found."
-          : error.message,
-        visibilityTime: 3000,
-        autoHide: true,
-      });
-    }
+    Alert.alert(
+      "Cancel Reservation",
+      "Are you sure you want to cancel this reservation?",
+      [
+        {
+          text: "No",
+          style: "cancel", // Dismiss the alert
+        },
+        {
+          text: "Yes",
+          onPress: async () => {
+            const payload = { reservation_id }; // Wrap reservation_id in an object
+            try {
+              await useAppStore.getState().cancelReservation(payload);
+              setModalVisible(false); // Close the modal after canceling
+              Toast.show({
+                type: "success",
+                text1: "Your reservation has been successfully cancelled.",
+                visibilityTime: 3000,
+                autoHide: true,
+              });
+            } catch (error: any) {
+              Toast.show({
+                type: "error",
+                text1: "Error",
+                text2: error.message.includes("404")
+                  ? "Reservation not found."
+                  : error.message,
+                visibilityTime: 3000,
+                autoHide: true,
+              });
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Reservation</Text>
-      </View>
-      <StatusBar hidden={false} backgroundColor="#FF9500" />
-
-      {/* Calendar Section */}
-      <View style={styles.calendarContainer}>
-        <Calendar
-          onDayPress={handleDayPress}
-          markedDates={{
-            ...Object.keys(reservations).reduce((acc, date) => {
-              acc[date] = { marked: true, dotColor: "#FF9500" };
-              return acc;
-            }, {} as Record<string, { marked: boolean; dotColor: string }>),
-            [selectedDate]: { selected: true, selectedColor: "#FF9500" },
-          }}
-          theme={{
-            selectedDayBackgroundColor: "#FF9500",
-            todayTextColor: "#FF9500",
-            arrowColor: "#FF9500",
-          }}
-        />
-      </View>
-
-      {/* Reservation Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Your Reserved Table</Text>
-            {selectedReservation ? (
-              <View style={styles.modalDetails}>
-                <Text style={styles.modalText}>
-                  Time:{" "}
-                  {new Date(
-                    selectedReservation.reservation_date
-                  ).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </Text>
-                <Text style={styles.modalText}>
-                  Guests: {selectedReservation.num_people}
-                </Text>
-                <Text style={styles.modalText}>
-                  Status: {selectedReservation.status}
-                </Text>
-              </View>
-            ) : (
-              <Text style={styles.modalText}>
-                No reservation details available.
-              </Text>
-            )}
-
-            {/* Cancel Button */}
-            <TouchableOpacity
-              style={[styles.cancelButton, { marginBottom: 10 }]}
-              onPress={() =>
-                selectedReservation &&
-                handleCancelReservation(selectedReservation.reservation_id)
-              }
-              loading={loading}
-              disabled={loading}
-            >
-              <Text style={styles.cancelButtonText}>Cancel Reservation</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
-              disabled={loading}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
+      <View>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Reservation</Text>
         </View>
-      </Modal>
+        <StatusBar hidden={false} backgroundColor="#FF9500" />
 
-      {/* Buttons */}
-      <View style={styles.buttonContainer}>
-        <Button
-          mode="contained"
-          onPress={() => navigation.navigate("CreateReservation")}
-          style={styles.button}
-          labelStyle={styles.buttonText}
+        {/* Calendar Section */}
+        <View style={styles.calendarContainer}>
+          <Calendar
+            onDayPress={handleDayPress}
+            markedDates={{
+              ...Object.keys(reservations).reduce((acc, date) => {
+                acc[date] = { marked: true, dotColor: "#FF9500" };
+                return acc;
+              }, {} as Record<string, { marked: boolean; dotColor: string }>),
+              [selectedDate]: { selected: true, selectedColor: "#FF9500" },
+            }}
+            theme={{
+              selectedDayBackgroundColor: "#FF9500",
+              todayTextColor: "#FF9500",
+              arrowColor: "#FF9500",
+            }}
+          />
+        </View>
+
+        {/* Reservation Modal */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
         >
-          Reserve a Table
-        </Button>
-        <Button
-          mode="contained"
-          onPress={() => console.log("Start queueing")}
-          style={styles.button}
-          labelStyle={styles.buttonText}
-        >
-          Start Queueing
-        </Button>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>Your Reserved Table</Text>
+              {selectedReservation ? (
+                <View style={styles.modalDetails}>
+                  <Text style={styles.modalText}>
+                    Time:{" "}
+                    {new Date(
+                      selectedReservation.reservation_date
+                    ).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </Text>
+                  <Text style={styles.modalText}>
+                    Guests: {selectedReservation.num_people}
+                  </Text>
+                  <Text style={styles.modalText}>
+                    Status: {selectedReservation.status}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={styles.modalText}>
+                  No reservation details available.
+                </Text>
+              )}
+
+              {/* Cancel Button */}
+              <TouchableOpacity
+                style={[styles.cancelButton, { marginBottom: 10 }]}
+                onPress={() =>
+                  selectedReservation &&
+                  handleCancelReservation(selectedReservation.reservation_id)
+                }
+                disabled={loading}
+              >
+                <Text style={styles.cancelButtonText}>Cancel Reservation</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setModalVisible(false)}
+                disabled={loading}
+              >
+                <Text style={styles.closeButtonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Buttons */}
+        <View style={styles.buttonContainer}>
+          <Button
+            mode="contained"
+            onPress={() => navigation.navigate("CreateReservation")}
+            style={styles.button}
+            labelStyle={styles.buttonText}
+          >
+            Reserve a Table
+          </Button>
+          <Button
+            mode="contained"
+            onPress={() => console.log("Start queueing")}
+            style={styles.button}
+            labelStyle={styles.buttonText}
+          >
+            Start Queueing
+          </Button>
+        </View>
+        <Toast />
       </View>
     </View>
   );
