@@ -45,16 +45,7 @@ export default function Login() {
   const onSubmit = useCallback(
     async (data: FormData) => {
       try {
-        const token = await login(data);
-        if (token) {
-          Toast.show({
-            type: "success",
-            text1: `LOGIN SUCCESSFUL`,
-            visibilityTime: 3000,
-            autoHide: true,
-            position: "top",
-          });
-        }
+        await login(data);
       } catch (err: any) {
         Toast.show({
           type: "error",
