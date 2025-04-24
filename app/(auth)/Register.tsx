@@ -59,7 +59,6 @@ export default function Register() {
 
   const onSubmit = useCallback(
     async (data: FormData) => {
-      console.log(data);
       try {
         await register(data);
         navigation.navigate("Success");

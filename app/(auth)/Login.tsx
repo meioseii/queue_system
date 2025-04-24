@@ -55,7 +55,6 @@ export default function Login() {
             position: "top",
           });
         }
-        console.log(data);
       } catch (err: any) {
         Toast.show({
           type: "error",
@@ -66,7 +65,6 @@ export default function Login() {
 
           position: "top",
         });
-        console.log(err);
       }
     },
     [login]
