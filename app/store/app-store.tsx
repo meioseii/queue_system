@@ -23,15 +23,25 @@ type MenuItem = {
   img_url: string;
 };
 
+type UserInfo = {
+  customer_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  username: string;
+};
+
 type AppStore = {
   loading: boolean;
   reservations: Record<string, Reservation[]>;
   categories: Category[];
   menuItems: MenuItem[];
+  userInfo: UserInfo | null;
   error: string | null;
   fetchReservations: () => Promise<void>;
   fetchCategories: () => Promise<void>;
   fetchMenuItems: (category: string) => Promise<void>;
+  fetchUserProfile: () => Promise<void>;
   createReservation: (payload: {
     num_people: number;
     table_number: number;
@@ -44,6 +54,7 @@ export const useAppStore = create<AppStore>((set) => ({
   reservations: {},
   categories: [],
   menuItems: [],
+  userInfo: null,
   error: null,
   loading: false,
 
@@ -133,7 +144,7 @@ export const useAppStore = create<AppStore>((set) => ({
     }
   },
 
-  fetchMenuItems: async (category: any) => {
+  fetchMenuItems: async (category) => {
     set({ loading: true, error: null });
     try {
       const { token } = useAuthStore.getState();
@@ -154,6 +165,34 @@ export const useAppStore = create<AppStore>((set) => ({
 
       const data: MenuItem[] = await response.json();
       set({ menuItems: data });
+    } catch (error: any) {
+      set({ error: error.message });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  fetchUserProfile: async () => {
+    set({ loading: true, error: null });
+    try {
+      const { token } = useAuthStore.getState();
+      const response = await fetch(`${BASE_URL}/customer/view-profile`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.msg || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      const data: UserInfo = await response.json();
+      set({ userInfo: data });
     } catch (error: any) {
       set({ error: error.message });
     } finally {

@@ -5,7 +5,7 @@ import {
   Poppins_400Regular,
   Poppins_700Bold,
 } from "@expo-google-fonts/poppins";
-import { TextInput, Button, Text, Icon } from "react-native-paper";
+import { TextInput, Button, Text } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AppStackParamList } from "../../app-types";
@@ -14,9 +14,9 @@ import { StatusBar } from "expo-status-bar";
 import { SplashScreen } from "expo-router";
 import Toast from "react-native-toast-message";
 import { useAuthStore } from "@/app/store/auth-store";
+import { useAppStore } from "@/app/store/app-store";
 
 type FormData = {
-  email: string;
   newPassword: string;
   confirmPassword: string;
 };
@@ -41,15 +41,33 @@ export default function ChangePassword() {
     formState: { errors },
   } = useForm<FormData>();
 
-  const { changePassword, loading, email } = useAuthStore();
+  const { changePassword, loading } = useAuthStore();
+  const { userInfo, fetchUserProfile } = useAppStore();
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  console.log(userInfo);
 
   const onSubmit = useCallback(
     async (data: FormData) => {
       try {
-        if (email) {
-          await changePassword({ email, newPassword: data.newPassword });
+        if (userInfo?.email) {
+          await changePassword({
+            email: userInfo.email,
+            newPassword: data.newPassword,
+          });
+          Toast.show({
+            type: "success",
+            text1: "Password Updated",
+            text2: "Your password has been successfully updated.",
+            visibilityTime: 3000,
+            autoHide: true,
+            position: "top",
+          });
+          navigation.navigate("Tabs");
         }
-        navigation.navigate("Tabs");
       } catch (err: any) {
         Toast.show({
           type: "error",
@@ -61,7 +79,7 @@ export default function ChangePassword() {
         });
       }
     },
-    [changePassword, email, navigation]
+    [changePassword, userInfo, navigation]
   );
 
   useEffect(() => {
@@ -79,20 +97,10 @@ export default function ChangePassword() {
       <StatusBar hidden={true}></StatusBar>
       <View style={{ bottom: 135 }}>
         <View style={styles.headerContainer}>
-          <Icon source="lock-open" size={24} color="#000" />
           <Text style={styles.title}>Create New Password</Text>
         </View>
-        <View
-          style={{
-            borderBottomColor: "black",
-            borderBottomWidth: StyleSheet.hairlineWidth,
-            borderTopColor: "black",
-            width: "100%",
-            marginBottom: 10,
-          }}
-        />
-        <Text style={{ fontFamily: "Poppins_400Regular", marginVertical: 5 }}>
-          Your new password must be different from previously used password.
+        <Text style={styles.instructionText}>
+          Your new password must be different from previously used passwords.
         </Text>
         <Controller
           control={control}
@@ -108,7 +116,7 @@ export default function ChangePassword() {
           }}
           render={({ field: { onChange, value } }) => (
             <TextInput
-              label="Password"
+              label="New Password"
               secureTextEntry={!seePass}
               mode="outlined"
               right={
@@ -128,17 +136,7 @@ export default function ChangePassword() {
           )}
         />
         {errors.newPassword && (
-          <Text
-            style={{
-              color: "red",
-              marginLeft: 10,
-              fontFamily: "Poppins_400Regular",
-              fontSize: 12,
-              paddingHorizontal: 10,
-            }}
-          >
-            {errors.newPassword.message}
-          </Text>
+          <Text style={styles.errorText}>{errors.newPassword.message}</Text>
         )}
 
         <Controller
@@ -171,18 +169,9 @@ export default function ChangePassword() {
           )}
         />
         {errors.confirmPassword && (
-          <Text
-            style={{
-              color: "red",
-              marginLeft: 10,
-              fontFamily: "Poppins_400Regular",
-              fontSize: 12,
-              paddingHorizontal: 10,
-            }}
-          >
-            {errors.confirmPassword.message}
-          </Text>
+          <Text style={styles.errorText}>{errors.confirmPassword.message}</Text>
         )}
+
         <Button
           mode="contained"
           onPress={handleSubmit(onSubmit)}
@@ -191,11 +180,10 @@ export default function ChangePassword() {
           loading={loading}
           disabled={loading}
         >
-          <Text style={{ fontFamily: "Poppins_700Bold", color: "white" }}>
-            SUBMIT
-          </Text>
+          <Text style={styles.buttonText}>SUBMIT</Text>
         </Button>
       </View>
+      <Toast />
     </View>
   );
 }
@@ -207,34 +195,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     backgroundColor: "#FAF9F6",
   },
-  backContainer: {
-    bottom: 225,
-    zIndex: 1,
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    width: 300,
-  },
-  backText: {
-    fontFamily: "Poppins_700Bold",
-    color: "#FF9500",
-    textDecorationLine: "underline",
-    fontSize: 16,
-  },
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 5,
+    marginBottom: 10,
   },
   title: {
     fontSize: 18,
     fontFamily: "Poppins_700Bold",
-    marginLeft: 10,
     color: "#FF9500",
+  },
+  instructionText: {
+    fontFamily: "Poppins_400Regular",
+    marginVertical: 10,
   },
   input: {
     marginTop: 10,
     height: 40,
+  },
+  errorText: {
+    color: "red",
+    marginLeft: 10,
+    fontFamily: "Poppins_400Regular",
+    fontSize: 12,
+    paddingHorizontal: 10,
+  },
+  buttonText: {
+    fontFamily: "Poppins_700Bold",
+    color: "white",
   },
 });
