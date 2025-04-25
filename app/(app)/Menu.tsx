@@ -66,7 +66,10 @@ export default function Menu() {
             <View>
               <Text style={styles.cardTitle}>{toTitleCase(item.category)}</Text>
             </View>
-            <TouchableOpacity style={styles.cardButton}>
+            <TouchableOpacity
+              style={styles.cardButton}
+              onPress={() => handleNavigation(item.category)}
+            >
               <Text style={styles.cardButtonText}>View More</Text>
             </TouchableOpacity>
           </View>
