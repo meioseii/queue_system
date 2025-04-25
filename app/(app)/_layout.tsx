@@ -156,10 +156,15 @@ export default function AppLayout() {
           options={{ headerShown: false }}
         />
         <Stack.Screen
-          name="MenuItems" // should be the category name :params
+          name="MenuItems"
           component={MenuItems}
-          options={{
-            title: "Menu Items",
+          options={({ route }) => ({
+            title:
+              route.params?.category
+                .toLowerCase()
+                .split("_")
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(" ") || "Menu Items", // Convert category to title case
             headerShown: true,
             headerStyle: {
               backgroundColor: "#FF9500",
@@ -170,7 +175,7 @@ export default function AppLayout() {
               color: "#FFF",
             },
             headerTintColor: "#FFF",
-          }}
+          })}
         />
         <Stack.Screen
           name="CreateReservation" // should be the category name :params
