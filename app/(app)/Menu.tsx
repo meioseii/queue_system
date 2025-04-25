@@ -12,17 +12,22 @@ import { useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AppStackParamList } from "../app-types";
-import { useAuthStore } from "../store/auth-store";
 import { FlashList } from "@shopify/flash-list";
+import { useAppStore } from "../store/app-store";
 
-const blurhash =
-  "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
+const toTitleCase = (text: string) => {
+  return text
+    .toLowerCase()
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
 
 export default function Menu() {
   type Navigation = NativeStackNavigationProp<AppStackParamList, "Menu">;
   const navigation = useNavigation<Navigation>();
-  const { logout } = useAuthStore();
 
+  const { categories, fetchCategories } = useAppStore();
   const [loaded, error] = useFonts({
     Poppins_400Regular,
     Poppins_700Bold,
@@ -34,52 +39,17 @@ export default function Menu() {
     }
   }, [loaded, error]);
 
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
   if (!loaded && !error) {
     return null;
   }
 
-  const onLogout = () => {
-    logout();
+  const handleNavigation = (category: string) => {
+    navigation.navigate("MenuItems", { category });
   };
-
-  const categories = [
-    {
-      name: "Main Dish",
-      image: "https://iqueue-bucket.s3.amazonaws.com/uploads/Beef Rendang.jpg",
-    },
-    {
-      name: "Side Dish and Appetizer",
-      image: "https://iqueue-bucket.s3.amazonaws.com/uploads/Nem Ran.png",
-    },
-    {
-      name: "Refresher",
-      image: "https://iqueue-bucket.s3.amazonaws.com/uploads/Tanglad Twist.png",
-    },
-    {
-      name: "Refresher",
-      image: "https://iqueue-bucket.s3.amazonaws.com/uploads/Tanglad Twist.png",
-    },
-    {
-      name: "Refresher",
-      image: "https://iqueue-bucket.s3.amazonaws.com/uploads/Tanglad Twist.png",
-    },
-    {
-      name: "Refresher",
-      image: "https://iqueue-bucket.s3.amazonaws.com/uploads/Tanglad Twist.png",
-    },
-    {
-      name: "Refresher",
-      image: "https://iqueue-bucket.s3.amazonaws.com/uploads/Tanglad Twist.png",
-    },
-    {
-      name: "Refresher",
-      image: "https://iqueue-bucket.s3.amazonaws.com/uploads/Tanglad Twist.png",
-    },
-    {
-      name: "Refresher",
-      image: "https://iqueue-bucket.s3.amazonaws.com/uploads/Tanglad Twist.png",
-    },
-  ];
 
   return (
     <View style={styles.container}>
@@ -92,9 +62,9 @@ export default function Menu() {
         numColumns={2}
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <Image source={{ uri: item.image }} style={styles.cardImage} />
+            <Image source={{ uri: item.imageURL }} style={styles.cardImage} />
             <View>
-              <Text style={styles.cardTitle}>{item.name}</Text>
+              <Text style={styles.cardTitle}>{toTitleCase(item.category)}</Text>
             </View>
             <TouchableOpacity style={styles.cardButton}>
               <Text style={styles.cardButtonText}>View More</Text>
