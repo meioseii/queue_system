@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { useAuthStore } from "./auth-store";
 
+const BASE_URL = "http://54.79.103.51:8080";
+
 type Reservation = {
   table_number: number;
   reservation_date: string;
@@ -27,19 +29,16 @@ export const useAppStore = create<AppStore>((set) => ({
   loading: false,
 
   fetchReservations: async () => {
-    set({ error: null }); // Clear previous errors
+    set({ error: null });
     try {
-      const { token } = useAuthStore.getState(); // Get the token from auth-store
-      const response = await fetch(
-        "http://54.79.103.51:8080/reservation/check",
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // Include the token in the Authorization header
-          },
-        }
-      );
+      const { token } = useAuthStore.getState();
+      const response = await fetch(`${BASE_URL}/reservation/check`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -48,31 +47,28 @@ export const useAppStore = create<AppStore>((set) => ({
         );
       }
 
-      const data = await response.text(); // Use text() instead of json() to handle empty responses
+      const data = await response.text();
 
       if (!data) {
-        console.warn("API returned an empty response.");
-        set({ reservations: {} }); // Set reservations to an empty object
+        set({ reservations: {} });
         return;
       }
 
-      const parsedData = JSON.parse(data); // Parse the JSON response
+      const parsedData = JSON.parse(data);
 
       let reservationsArray: Reservation[] = [];
 
-      // Handle single reservation object
       if (parsedData && !Array.isArray(parsedData)) {
-        reservationsArray = [parsedData]; // Wrap the single object in an array
+        reservationsArray = [parsedData];
       } else if (Array.isArray(parsedData)) {
-        reservationsArray = parsedData; // Use the array directly
+        reservationsArray = parsedData;
       } else {
         throw new Error("API response is not valid");
       }
 
-      // Transform the data into a format suitable for the calendar
       const transformedReservations = reservationsArray.reduce(
         (acc: Record<string, Reservation[]>, reservation: Reservation) => {
-          const date = reservation.reservation_date.split("T")[0]; // Extract the date part
+          const date = reservation.reservation_date.split("T")[0];
           if (!acc[date]) {
             acc[date] = [];
           }
@@ -84,27 +80,24 @@ export const useAppStore = create<AppStore>((set) => ({
 
       set({ reservations: transformedReservations });
     } catch (error: any) {
-      set({ error: error.message }); // Set the error message
+      set({ error: error.message });
     } finally {
       set({ loading: false, error: null });
     }
   },
 
   createReservation: async (payload) => {
-    set({ loading: true, error: null }); // Clear previous errors
+    set({ loading: true, error: null });
     try {
-      const { token } = useAuthStore.getState(); // Get the token from auth-store
-      const response = await fetch(
-        "http://54.79.103.51:8080/reservation/create",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // Include the token in the Authorization header
-          },
-          body: JSON.stringify(payload), // Send the payload as JSON
-        }
-      );
+      const { token } = useAuthStore.getState();
+      const response = await fetch(`${BASE_URL}/reservation/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
 
       const data = await response.json();
 
@@ -114,29 +107,26 @@ export const useAppStore = create<AppStore>((set) => ({
 
       await useAppStore.getState().fetchReservations();
     } catch (error: any) {
-      set({ error: error.message }); // Set the error message
-      throw error; // Re-throw the error if needed
+      set({ error: error.message });
+      throw error;
     } finally {
       set({ loading: false, error: null });
     }
   },
 
   cancelReservation: async (payload) => {
-    set({ loading: true, error: null }); // Clear previous errors
+    set({ loading: true, error: null });
     try {
-      const { token } = useAuthStore.getState(); // Get the token from auth-store
+      const { token } = useAuthStore.getState();
 
-      const response = await fetch(
-        `http://54.79.103.51:8080/reservation/cancel`,
-        {
-          method: "PATCH", // Use PATCH as specified
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // Include the token in the Authorization header
-          },
-          body: JSON.stringify(payload), // Send the payload as JSON
-        }
-      );
+      const response = await fetch(`${BASE_URL}/reservation/cancel`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
 
       const data = await response.json();
       if (!response.ok) {
@@ -145,8 +135,8 @@ export const useAppStore = create<AppStore>((set) => ({
 
       await useAppStore.getState().fetchReservations();
     } catch (error: any) {
-      set({ error: error.message }); // Set the error message
-      throw error; // Re-throw the error if needed
+      set({ error: error.message });
+      throw error;
     } finally {
       set({ loading: false });
     }
