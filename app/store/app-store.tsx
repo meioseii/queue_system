@@ -20,7 +20,7 @@ type MenuItem = {
   name: string;
   description: string;
   price: number;
-  imageURL: string;
+  img_url: string;
 };
 
 type AppStore = {
