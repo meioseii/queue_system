@@ -1,14 +1,8 @@
 import { StatusBar } from "expo-status-bar";
-import {
-  View,
-  StyleSheet,
-  Text,
-  ActivityIndicator,
-  FlatList,
-  Image,
-} from "react-native";
+import { View, StyleSheet, Text, ActivityIndicator, Image } from "react-native";
 import { useEffect } from "react";
 import { useRoute } from "@react-navigation/native";
+import { FlashList } from "@shopify/flash-list";
 import { useAppStore } from "@/app/store/app-store";
 
 export default function MenuItems() {
@@ -40,19 +34,22 @@ export default function MenuItems() {
   return (
     <View style={styles.container}>
       <StatusBar hidden={false} backgroundColor="#FF9500" />
-      <FlatList
+      <FlashList
         data={menuItems}
+        numColumns={2}
         keyExtractor={(item) => item.menu_id}
         renderItem={({ item }) => (
           <View style={styles.card}>
             <Image source={{ uri: item.img_url }} style={styles.cardImage} />
-            <View style={styles.cardContent}>
+            <View>
               <Text style={styles.cardTitle}>{item.name}</Text>
-              <Text style={styles.cardDescription}>{item.description}</Text>
-              <Text style={styles.cardPrice}>${item.price.toFixed(2)}</Text>
+            </View>
+            <View style={styles.cardPriceContainer}>
+              <Text style={styles.cardPrice}>₱{item.price.toFixed(2)}</Text>
             </View>
           </View>
         )}
+        estimatedItemSize={200}
         contentContainerStyle={styles.listContent}
       />
     </View>
@@ -84,9 +81,10 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   card: {
+    flex: 1,
+    margin: 10,
     backgroundColor: "#FFF",
     borderRadius: 10,
-    marginBottom: 10,
     overflow: "hidden",
     elevation: 3,
   },
@@ -94,22 +92,26 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 150,
   },
-  cardContent: {
-    padding: 10,
-  },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 5,
+    position: "absolute",
+    bottom: 0,
+    width: "100%",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    color: "#FFF",
+    fontFamily: "Poppins_400Regular",
+    fontSize: 12,
+    textAlign: "center",
+    paddingVertical: 5,
   },
-  cardDescription: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 5,
+  cardPriceContainer: {
+    backgroundColor: "#FF9500",
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
   },
   cardPrice: {
+    fontFamily: "Poppins_700Bold",
     fontSize: 14,
-    fontWeight: "bold",
-    color: "#FF9500",
+    color: "#FFF",
   },
 });
