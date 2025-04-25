@@ -160,14 +160,14 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
   changePassword: async ({ email, newPassword }) => {
     set({ loading: true, error: null });
-    const { changePasswordToken } = useAuthStore.getState();
+    const { token } = useAuthStore.getState();
 
     try {
       const response = await fetch(`${BASE_URL}/customer/change-password`, {
-        method: "POST",
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${changePasswordToken}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ email, newPassword }),
       });

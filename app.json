@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "queue_system",
+    "name": "iQueue",
     "slug": "queue_system",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/iQueueImage.svg",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,9 +13,10 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/iQueueImage.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.meioseii.queue_system"
     },
     "web": {
       "bundler": "metro",
@@ -27,7 +28,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/iQueueImage.svg",
+          "image": "./assets/images/iQueueImage.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
@@ -36,6 +37,11 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "e27d8a95-f1f3-47a7-885c-717b024fb277"
+      }
     }
   }
 }

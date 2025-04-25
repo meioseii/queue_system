@@ -64,7 +64,9 @@ export default function ChangePassword() {
             autoHide: true,
             position: "top",
           });
-          navigation.navigate("Tabs");
+          setTimeout(() => {
+            navigation.navigate("Tabs");
+          }, 2000);
         }
       } catch (err: any) {
         Toast.show({
