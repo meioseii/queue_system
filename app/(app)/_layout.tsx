@@ -24,6 +24,7 @@ import MenuItems from "./screens/MenuItems";
 import { AppStackParamList } from "../app-types";
 import CreateReservation from "./screens/CreateReservation";
 import SuccessReservation from "./screens/SuccessReservation";
+import ChangePassword from "./screens/ChangePassword";
 
 const Tab = createBottomTabNavigator();
 
@@ -164,7 +165,7 @@ export default function AppLayout() {
                 .toLowerCase()
                 .split("_")
                 .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(" ") || "Menu Items", // Convert category to title case
+                .join(" ") || "Menu Items",
             headerShown: true,
             headerStyle: {
               backgroundColor: "#FF9500",
@@ -178,10 +179,10 @@ export default function AppLayout() {
           })}
         />
         <Stack.Screen
-          name="CreateReservation" // should be the category name :params
-          component={CreateReservation}
+          name="ChangePassword"
+          component={ChangePassword}
           options={{
-            title: "Create Reservation",
+            title: "Change Password",
             headerShown: true,
             headerStyle: {
               backgroundColor: "#FF9500",
@@ -198,6 +199,23 @@ export default function AppLayout() {
           name="SuccessReservation"
           component={SuccessReservation}
           options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="CreateReservation"
+          component={CreateReservation}
+          options={{
+            title: "Create Reservation",
+            headerShown: true,
+            headerStyle: {
+              backgroundColor: "#FF9500",
+            },
+            headerTitleStyle: {
+              fontFamily: "Poppins_400Regular",
+              fontSize: 16,
+              color: "#FFF",
+            },
+            headerTintColor: "#FFF",
+          }}
         />
       </Stack.Navigator>
     </NavigationIndependentTree>

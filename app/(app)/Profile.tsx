@@ -76,7 +76,7 @@ export default function Profile() {
 
         <TouchableOpacity
           style={[styles.option, styles.optionWithBorder]}
-          onPress={() => console.log("Change Password")}
+          onPress={() => navigation.navigate("ChangePassword")}
         >
           <Text style={styles.optionText}>Change Password</Text>
           <MaterialIcons name="lock" size={20} color="#333" />

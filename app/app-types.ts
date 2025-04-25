@@ -7,6 +7,7 @@ export type AppStackParamList = {
   MenuItems: undefined;
   CreateReservation: undefined;
   SuccessReservation: undefined;
+  ChangePassword: undefined;
 
   // Add other screens here if needed
 };
