@@ -102,6 +102,7 @@ const styles = StyleSheet.create({
   },
   flashListContent: {
     paddingTop: 10,
+    paddingHorizontal: 10,
     paddingBottom: 120,
   },
   card: {
