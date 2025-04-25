@@ -25,8 +25,8 @@ type MenuItem = {
 
 type UserInfo = {
   customer_id: string;
-  first_name: string;
-  last_name: string;
+  first_Name: string;
+  last_Name: string;
   email: string;
   username: string;
 };

@@ -48,8 +48,6 @@ export default function ChangePassword() {
     fetchUserProfile();
   }, []);
 
-  console.log(userInfo);
-
   const onSubmit = useCallback(
     async (data: FormData) => {
       try {

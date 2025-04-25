@@ -14,6 +14,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AppStackParamList } from "../app-types";
 import { useAuthStore } from "../store/auth-store";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { useAppStore } from "../store/app-store";
 
 const blurhash =
   "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
@@ -22,6 +23,11 @@ export default function Profile() {
   type Navigation = NativeStackNavigationProp<AppStackParamList, "Profile">;
   const navigation = useNavigation<Navigation>();
   const { logout } = useAuthStore();
+  const { userInfo, fetchUserProfile } = useAppStore();
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
 
   const [loaded, error] = useFonts({
     Poppins_400Regular,
@@ -55,8 +61,10 @@ export default function Profile() {
           source={require("../../assets/images/profile.svg")}
           style={styles.avatar}
         />
-        <Text style={styles.userName}>John Doe</Text>
-        <Text style={styles.userEmail}>johndoe@example.com</Text>
+        <Text style={styles.userName}>
+          {userInfo?.first_Name} {userInfo?.last_Name}
+        </Text>
+        <Text style={styles.userEmail}>{userInfo?.email}</Text>
         <View style={styles.rewardContainer}>
           <MaterialIcons name="diamond" size={20} color="#fff" />
           <Text style={styles.rewardPoints}>{rewardPoints}</Text>
