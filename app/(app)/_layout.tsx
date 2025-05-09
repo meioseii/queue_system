@@ -25,6 +25,7 @@ import { AppStackParamList } from "../app-types";
 import CreateReservation from "./screens/CreateReservation";
 import SuccessReservation from "./screens/SuccessReservation";
 import ChangePassword from "./screens/ChangePassword";
+import EditProfile from "./screens/EditProfile";
 
 const Tab = createBottomTabNavigator();
 
@@ -183,6 +184,23 @@ export default function AppLayout() {
           component={ChangePassword}
           options={{
             title: "Change Password",
+            headerShown: true,
+            headerStyle: {
+              backgroundColor: "#FF9500",
+            },
+            headerTitleStyle: {
+              fontFamily: "Poppins_400Regular",
+              fontSize: 16,
+              color: "#FFF",
+            },
+            headerTintColor: "#FFF",
+          }}
+        />
+        <Stack.Screen
+          name="EditProfile"
+          component={EditProfile}
+          options={{
+            title: "Edit Profile",
             headerShown: true,
             headerStyle: {
               backgroundColor: "#FF9500",
