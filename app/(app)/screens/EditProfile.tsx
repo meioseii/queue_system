@@ -1,9 +1,12 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { TextInput, Button, Text } from "react-native-paper";
 import { useForm, Controller } from "react-hook-form";
 import { useAppStore } from "@/app/store/app-store";
 import Toast from "react-native-toast-message";
+import { AppStackParamList } from "@/app/app-types";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useNavigation } from "@react-navigation/native";
 
 type FormData = {
   email: string;
@@ -13,7 +16,14 @@ type FormData = {
 };
 
 function EditProfile() {
-  const { userInfo, fetchUserProfile } = useAppStore();
+  const { userInfo, fetchUserProfile, editUserProfile, loading } =
+    useAppStore();
+
+  type Navigation = NativeStackNavigationProp<
+    AppStackParamList,
+    "ChangePassword"
+  >;
+  const navigation = useNavigation<Navigation>();
 
   const {
     control,
@@ -63,17 +73,35 @@ function EditProfile() {
     }
   };
 
-  const handleChangeProfile = (data: FormData) => {
-    console.log("Updated Profile Data:", data);
-    Toast.show({
-      type: "success",
-      text1: "PROFILE UPDATE",
-      text2: "YOUR PROFILE HAS BEEN SUCCESSFULLY UPDATED",
-      visibilityTime: 3000,
-      autoHide: true,
-      position: "bottom",
-    });
-  };
+  const handleChangeProfile = useCallback(
+    async (data: FormData) => {
+      try {
+        await editUserProfile(data);
+        Toast.show({
+          type: "success",
+          text1: "PROFILE UPDATE",
+          text2: "YOUR PROFILE HAS BEEN SUCCESSFULLY UPDATED",
+          visibilityTime: 3000,
+          autoHide: true,
+          position: "bottom",
+        });
+        setTimeout(() => {
+          fetchUserProfile();
+          navigation.navigate("Tabs");
+        }, 2000);
+      } catch (err: any) {
+        Toast.show({
+          type: "error",
+          text1: `FAILED TO UPDATE YOUR INFORMATION`,
+          text2: err.message,
+          visibilityTime: 3000,
+          autoHide: true,
+          position: "top",
+        });
+      }
+    },
+    [editUserProfile, userInfo]
+  );
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -179,6 +207,8 @@ function EditProfile() {
           onPress={handleSubmit(handleChangeProfile)}
           style={styles.button}
           buttonColor="#FF9500"
+          disabled={loading}
+          loading={loading}
         >
           <Text
             style={{

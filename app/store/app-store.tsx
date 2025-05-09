@@ -42,6 +42,12 @@ type AppStore = {
   fetchCategories: () => Promise<void>;
   fetchMenuItems: (category: string) => Promise<void>;
   fetchUserProfile: () => Promise<void>;
+  editUserProfile: (payload: {
+    email: string;
+    first_Name: string;
+    last_Name: string;
+    username: string;
+  }) => Promise<void>;
   createReservation: (payload: {
     num_people: number;
     table_number: number;
@@ -200,16 +206,17 @@ export const useAppStore = create<AppStore>((set) => ({
     }
   },
 
-  editUserProfile: async () => {
+  editUserProfile: async (payload) => {
     set({ loading: true, error: null });
     try {
       const { token } = useAuthStore.getState();
       const response = await fetch(`${BASE_URL}/customer/update-profile`, {
-        method: "GET",
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
