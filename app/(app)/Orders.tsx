@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
   container: {
     height: "100%",
     backgroundColor: "#FAF9F6",
-    marginTop: 36,
+    marginTop: 35,
     display: "flex",
   },
   header: {

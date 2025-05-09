@@ -76,7 +76,7 @@ export default function Profile() {
       <View style={styles.optionsContainer}>
         <TouchableOpacity
           style={[styles.option, styles.optionWithBorder]}
-          onPress={() => console.log("Edit Profile")}
+          onPress={() => navigation.navigate("EditProfile")}
         >
           <Text style={styles.optionText}>Edit Profile</Text>
           <MaterialIcons name="edit" size={20} color="#333" />
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
   container: {
     height: "100%",
     backgroundColor: "#FAF9F6",
-    marginTop: 36,
+    marginTop: 35,
     display: "flex",
   },
   header: {
