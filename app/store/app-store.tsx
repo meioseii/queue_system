@@ -200,6 +200,34 @@ export const useAppStore = create<AppStore>((set) => ({
     }
   },
 
+  editUserProfile: async () => {
+    set({ loading: true, error: null });
+    try {
+      const { token } = useAuthStore.getState();
+      const response = await fetch(`${BASE_URL}/customer/update-profile`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.msg || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      const data: UserInfo = await response.json();
+      set({ userInfo: data });
+    } catch (error: any) {
+      set({ error: error.message });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
   createReservation: async (payload) => {
     set({ loading: true, error: null });
     try {
