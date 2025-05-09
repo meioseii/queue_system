@@ -94,7 +94,6 @@ export default function ChangePassword() {
 
   return (
     <View style={styles.container}>
-      <StatusBar hidden={true}></StatusBar>
       <View style={{ bottom: 135 }}>
         <View style={styles.headerContainer}>
           <Text style={styles.title}>Create New Password</Text>
