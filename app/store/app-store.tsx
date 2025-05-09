@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { useAuthStore } from "./auth-store";
 
-const BASE_URL = "http://54.79.103.51:8080";
+const BASE_URL = "http://16.176.47.117";
 
 type Reservation = {
   table_number: number;
