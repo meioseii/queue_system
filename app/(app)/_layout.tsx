@@ -26,6 +26,7 @@ import CreateReservation from "./screens/CreateReservation";
 import SuccessReservation from "./screens/SuccessReservation";
 import ChangePassword from "./screens/ChangePassword";
 import EditProfile from "./screens/EditProfile";
+import QRScanner from "./QRScanner";
 
 const Tab = createBottomTabNavigator();
 
@@ -234,6 +235,11 @@ export default function AppLayout() {
             },
             headerTintColor: "#FFF",
           }}
+        />
+        <Stack.Screen
+          name="QRScanner"
+          component={QRScanner}
+          options={{ headerShown: false }}
         />
       </Stack.Navigator>
     </NavigationIndependentTree>

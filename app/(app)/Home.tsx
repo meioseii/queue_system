@@ -175,7 +175,7 @@ export default function Home() {
           </Button>
           <Button
             mode="contained"
-            onPress={() => console.log("Start queueing")}
+            onPress={() => navigation.navigate("QRScanner")}
             style={styles.button}
             labelStyle={styles.buttonText}
           >
@@ -268,6 +268,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontFamily: "Poppins_700Bold",
+    width: "100%",
   },
   cancelButton: {
     backgroundColor: "#FF0000",
