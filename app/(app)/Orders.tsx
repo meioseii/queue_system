@@ -8,7 +8,12 @@ import {
   Poppins_700Bold,
 } from "@expo-google-fonts/poppins";
 import { TextInput, Button, Text, IconButton } from "react-native-paper";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import { useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -83,7 +88,7 @@ export default function Orders() {
   type Navigation = NativeStackNavigationProp<AppStackParamList, "Orders">;
   const navigation = useNavigation<Navigation>();
   const { logout } = useAuthStore();
-  const { categories, fetchCategories } = useAppStore();
+  const { categories, fetchCategories, loadingStates } = useAppStore();
 
   // Initialize cart items with mock data
   const [cartItems, setCartItems] = useState<CartItem[]>(mockCartItems);
@@ -105,6 +110,14 @@ export default function Orders() {
 
   if (!loaded && !error) {
     return null;
+  }
+
+  if (loadingStates.fetchCategories) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#FF9500" />
+      </View>
+    );
   }
 
   const updateQuantity = (id: string, increment: boolean) => {
@@ -242,5 +255,11 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_700Bold",
     fontSize: 16,
     color: "#FF9500",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FAF9F6",
   },
 });

@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { Button, Text } from "react-native-paper";
-import { View, StyleSheet, Modal, TouchableOpacity, Alert } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Modal,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import { Calendar } from "react-native-calendars";
 import { useAppStore } from "../store/app-store";
 import { AppStackParamList } from "../app-types";
@@ -25,7 +32,7 @@ export default function Home() {
   const [selectedReservation, setSelectedReservation] =
     useState<Reservation | null>(null);
 
-  const { reservations, fetchReservations, loading } = useAppStore(); // Use app-store for reservations
+  const { reservations, fetchReservations, loadingStates } = useAppStore(); // Use app-store for reservations
 
   // Fetch reservations on component mount
   useEffect(() => {
@@ -83,28 +90,33 @@ export default function Home() {
     <View style={styles.container}>
       <View>
         <View style={styles.header}>
-          <Text style={styles.headerText}>Reservation</Text>
+          <Text style={styles.headerText}>Home</Text>
         </View>
         <StatusBar hidden={false} backgroundColor="#FF9500" />
 
-        {/* Calendar Section */}
-        <View style={styles.calendarContainer}>
-          <Calendar
-            onDayPress={handleDayPress}
-            markedDates={{
-              ...Object.keys(reservations).reduce((acc, date) => {
-                acc[date] = { marked: true, dotColor: "#FF9500" };
-                return acc;
-              }, {} as Record<string, { marked: boolean; dotColor: string }>),
-              [selectedDate]: { selected: true, selectedColor: "#FF9500" },
-            }}
-            theme={{
-              selectedDayBackgroundColor: "#FF9500",
-              todayTextColor: "#FF9500",
-              arrowColor: "#FF9500",
-            }}
-          />
-        </View>
+        {loadingStates.fetchReservations ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#FF9500" />
+          </View>
+        ) : (
+          <View style={styles.calendarContainer}>
+            <Calendar
+              onDayPress={handleDayPress}
+              markedDates={{
+                ...Object.keys(reservations).reduce((acc, date) => {
+                  acc[date] = { marked: true, dotColor: "#FF9500" };
+                  return acc;
+                }, {} as Record<string, { marked: boolean; dotColor: string }>),
+                [selectedDate]: { selected: true, selectedColor: "#FF9500" },
+              }}
+              theme={{
+                selectedDayBackgroundColor: "#FF9500",
+                todayTextColor: "#FF9500",
+                arrowColor: "#FF9500",
+              }}
+            />
+          </View>
+        )}
 
         {/* Reservation Modal */}
         <Modal
@@ -147,7 +159,7 @@ export default function Home() {
                   selectedReservation &&
                   handleCancelReservation(selectedReservation.reservation_id)
                 }
-                disabled={loading}
+                disabled={loadingStates.cancelReservation}
               >
                 <Text style={styles.cancelButtonText}>Cancel Reservation</Text>
               </TouchableOpacity>
@@ -155,7 +167,7 @@ export default function Home() {
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={() => setModalVisible(false)}
-                disabled={loading}
+                disabled={loadingStates.cancelReservation}
               >
                 <Text style={styles.closeButtonText}>Close</Text>
               </TouchableOpacity>
@@ -281,5 +293,10 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_700Bold",
     fontSize: 14,
     color: "#FFF",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

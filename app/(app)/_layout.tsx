@@ -42,9 +42,15 @@ export function Tabs() {
           borderBottomEndRadius: 15,
           borderBottomStartRadius: 15,
           marginHorizontal: 15,
-          height: 55,
+          height: 65,
           position: "absolute",
           bottom: 20,
+          paddingBottom: 10,
+          paddingTop: 5,
+        },
+        tabBarItemStyle: {
+          height: 55,
+          paddingBottom: 5,
         },
         tabBarButton: (props) => (
           <View
@@ -85,12 +91,13 @@ export function Tabs() {
           title: "Reservation",
           tabBarLabelStyle: {
             fontFamily: "Poppins_400Regular",
-            fontSize: 8,
+            fontSize: 10,
+            lineHeight: 14,
           },
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons
               name="calendar-clock"
-              size={18}
+              size={22}
               color={color}
             />
           ),
@@ -104,10 +111,11 @@ export function Tabs() {
           title: "Menu",
           tabBarLabelStyle: {
             fontFamily: "Poppins_400Regular",
-            fontSize: 8,
+            fontSize: 10,
+            lineHeight: 14,
           },
           tabBarIcon: ({ color }) => (
-            <MaterialIcons name="fastfood" size={18} color={color} />
+            <MaterialIcons name="fastfood" size={22} color={color} />
           ),
         }}
       />
@@ -119,10 +127,11 @@ export function Tabs() {
           title: "Orders",
           tabBarLabelStyle: {
             fontFamily: "Poppins_400Regular",
-            fontSize: 8,
+            fontSize: 10,
+            lineHeight: 14,
           },
           tabBarIcon: ({ color }) => (
-            <FontAwesome5 name="concierge-bell" size={18} color={color} />
+            <FontAwesome5 name="concierge-bell" size={22} color={color} />
           ),
         }}
       />
@@ -134,10 +143,11 @@ export function Tabs() {
           title: "Account",
           tabBarLabelStyle: {
             fontFamily: "Poppins_400Regular",
-            fontSize: 8,
+            fontSize: 10,
+            lineHeight: 14,
           },
           tabBarIcon: ({ color }) => (
-            <MaterialIcons name="manage-accounts" size={18} color={color} />
+            <MaterialIcons name="manage-accounts" size={22} color={color} />
           ),
         }}
       />
@@ -146,6 +156,10 @@ export function Tabs() {
 }
 
 const Stack = createNativeStackNavigator();
+
+type MenuItemsParams = {
+  category: string;
+};
 
 export default function AppLayout() {
   type Navigation = NativeStackNavigationProp<AppStackParamList>;
@@ -161,24 +175,30 @@ export default function AppLayout() {
         <Stack.Screen
           name="MenuItems"
           component={MenuItems}
-          options={({ route }) => ({
-            title:
-              route.params?.category
-                .toLowerCase()
-                .split("_")
-                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(" ") || "Menu Items",
-            headerShown: true,
-            headerStyle: {
-              backgroundColor: "#FF9500",
-            },
-            headerTitleStyle: {
-              fontFamily: "Poppins_400Regular",
-              fontSize: 16,
-              color: "#FFF",
-            },
-            headerTintColor: "#FFF",
-          })}
+          options={({ route }) => {
+            const params = route.params as MenuItemsParams;
+            return {
+              title:
+                params?.category
+                  .toLowerCase()
+                  .split("_")
+                  .map(
+                    (word: string) =>
+                      word.charAt(0).toUpperCase() + word.slice(1)
+                  )
+                  .join(" ") || "Menu Items",
+              headerShown: true,
+              headerStyle: {
+                backgroundColor: "#FF9500",
+              },
+              headerTitleStyle: {
+                fontFamily: "Poppins_400Regular",
+                fontSize: 16,
+                color: "#FFF",
+              },
+              headerTintColor: "#FFF",
+            };
+          }}
         />
         <Stack.Screen
           name="ChangePassword"

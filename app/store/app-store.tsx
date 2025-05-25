@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { useAuthStore } from "./auth-store";
 
-const BASE_URL = "http://16.176.47.117";
+const BASE_URL = "http://54.252.152.233";
 
 type Reservation = {
   table_number: number;
@@ -31,8 +31,18 @@ type UserInfo = {
   username: string;
 };
 
+type LoadingState = {
+  fetchReservations: boolean;
+  fetchCategories: boolean;
+  fetchMenuItems: boolean;
+  fetchUserProfile: boolean;
+  editUserProfile: boolean;
+  createReservation: boolean;
+  cancelReservation: boolean;
+};
+
 type AppStore = {
-  loading: boolean;
+  loadingStates: LoadingState;
   reservations: Record<string, Reservation[]>;
   categories: Category[];
   menuItems: MenuItem[];
@@ -56,238 +66,239 @@ type AppStore = {
   cancelReservation: (payload: { reservation_id: string }) => Promise<void>;
 };
 
+const initialLoadingState: LoadingState = {
+  fetchReservations: false,
+  fetchCategories: false,
+  fetchMenuItems: false,
+  fetchUserProfile: false,
+  editUserProfile: false,
+  createReservation: false,
+  cancelReservation: false,
+};
+
+// API request wrapper with error handling
+const apiRequest = async (
+  url: string,
+  options: RequestInit,
+  loadingKey: keyof LoadingState,
+  set: any
+) => {
+  set((state: AppStore) => ({
+    loadingStates: { ...state.loadingStates, [loadingKey]: true },
+    error: null,
+  }));
+
+  try {
+    const response = await fetch(`${BASE_URL}${url}`, options);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.msg || `HTTP error! status: ${response.status}`
+      );
+    }
+    return await response.json();
+  } catch (error: any) {
+    set({ error: error.message });
+    throw error;
+  } finally {
+    set((state: AppStore) => ({
+      loadingStates: { ...state.loadingStates, [loadingKey]: false },
+    }));
+  }
+};
+
 export const useAppStore = create<AppStore>((set) => ({
+  loadingStates: initialLoadingState,
   reservations: {},
   categories: [],
   menuItems: [],
   userInfo: null,
   error: null,
-  loading: false,
 
   fetchReservations: async () => {
-    set({ error: null });
     try {
       const { token } = useAuthStore.getState();
-      const response = await fetch(`${BASE_URL}/reservation/check`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const data = await apiRequest(
+        "/reservation/check",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.msg || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      const data = await response.text();
-
-      if (!data) {
-        set({ reservations: {} });
-        return;
-      }
-
-      const parsedData = JSON.parse(data);
-
-      let reservationsArray: Reservation[] = [];
-
-      if (parsedData && !Array.isArray(parsedData)) {
-        reservationsArray = [parsedData];
-      } else if (Array.isArray(parsedData)) {
-        reservationsArray = parsedData;
-      } else {
-        throw new Error("API response is not valid");
-      }
-
-      const transformedReservations = reservationsArray.reduce(
-        (acc: Record<string, Reservation[]>, reservation: Reservation) => {
-          const date = reservation.reservation_date.split("T")[0];
-          if (!acc[date]) {
-            acc[date] = [];
-          }
-          acc[date].push(reservation);
-          return acc;
-        },
-        {}
+        "fetchReservations",
+        set
       );
 
+      const transformedReservations = transformReservationsData(data);
       set({ reservations: transformedReservations });
-    } catch (error: any) {
-      set({ error: error.message });
-    } finally {
-      set({ loading: false, error: null });
+    } catch (error) {
+      // Error already handled by apiRequest
     }
   },
 
   fetchCategories: async () => {
-    set({ loading: true, error: null });
+    set({ loadingStates: { ...initialLoadingState, fetchCategories: true } });
     try {
       const { token } = useAuthStore.getState();
-      const response = await fetch(`${BASE_URL}/category/all`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const data = await apiRequest(
+        "/category/all",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.msg || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      const data: Category[] = await response.json();
+        "fetchCategories",
+        set
+      );
       set({ categories: data });
-    } catch (error: any) {
-      set({ error: error.message });
-    } finally {
-      set({ loading: false });
+    } catch (error) {
+      // Error already handled by apiRequest
     }
   },
 
   fetchMenuItems: async (category) => {
-    set({ loading: true, error: null });
+    set({ loadingStates: { ...initialLoadingState, fetchMenuItems: true } });
     try {
       const { token } = useAuthStore.getState();
-      const response = await fetch(`${BASE_URL}/menu/view/${category}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const data = await apiRequest(
+        `/menu/view/${category}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.msg || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      const data: MenuItem[] = await response.json();
+        "fetchMenuItems",
+        set
+      );
       set({ menuItems: data });
-    } catch (error: any) {
-      set({ error: error.message });
-    } finally {
-      set({ loading: false });
+    } catch (error) {
+      // Error already handled by apiRequest
     }
   },
 
   fetchUserProfile: async () => {
-    set({ loading: true, error: null });
+    set({ loadingStates: { ...initialLoadingState, fetchUserProfile: true } });
     try {
       const { token } = useAuthStore.getState();
-      const response = await fetch(`${BASE_URL}/customer/view-profile`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const data = await apiRequest(
+        "/customer/view-profile",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.msg || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      const data: UserInfo = await response.json();
+        "fetchUserProfile",
+        set
+      );
       set({ userInfo: data });
-    } catch (error: any) {
-      set({ error: error.message });
-    } finally {
-      set({ loading: false });
+    } catch (error) {
+      // Error already handled by apiRequest
     }
   },
 
   editUserProfile: async (payload) => {
-    set({ loading: true, error: null });
+    set({ loadingStates: { ...initialLoadingState, editUserProfile: true } });
     try {
       const { token } = useAuthStore.getState();
-      const response = await fetch(`${BASE_URL}/customer/update-profile`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const data = await apiRequest(
+        "/customer/update-profile",
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.msg || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      const data: UserInfo = await response.json();
+        "editUserProfile",
+        set
+      );
       set({ userInfo: data });
-    } catch (error: any) {
-      set({ error: error.message });
-    } finally {
-      set({ loading: false });
+    } catch (error) {
+      // Error already handled by apiRequest
     }
   },
 
   createReservation: async (payload) => {
-    set({ loading: true, error: null });
+    set({ loadingStates: { ...initialLoadingState, createReservation: true } });
     try {
       const { token } = useAuthStore.getState();
-      const response = await fetch(`${BASE_URL}/reservation/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const data = await apiRequest(
+        "/reservation/create",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.msg || `HTTP error! status: ${response.status}`);
-      }
-
+        "createReservation",
+        set
+      );
       await useAppStore.getState().fetchReservations();
-    } catch (error: any) {
-      set({ error: error.message });
-      throw error;
-    } finally {
-      set({ loading: false, error: null });
+    } catch (error) {
+      // Error already handled by apiRequest
     }
   },
 
   cancelReservation: async (payload) => {
-    set({ loading: true, error: null });
+    set({ loadingStates: { ...initialLoadingState, cancelReservation: true } });
     try {
       const { token } = useAuthStore.getState();
-
-      const response = await fetch(`${BASE_URL}/reservation/cancel`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const data = await apiRequest(
+        "/reservation/cancel",
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.msg || `HTTP error! status: ${response.status}`);
-      }
-
+        "cancelReservation",
+        set
+      );
       await useAppStore.getState().fetchReservations();
-    } catch (error: any) {
-      set({ error: error.message });
-      throw error;
-    } finally {
-      set({ loading: false });
+    } catch (error) {
+      // Error already handled by apiRequest
     }
   },
 }));
+
+// Utility function to transform reservations data
+const transformReservationsData = (
+  data: any
+): Record<string, Reservation[]> => {
+  let reservationsArray: Reservation[] = [];
+
+  if (!data) return {};
+
+  if (typeof data === "object" && !Array.isArray(data)) {
+    reservationsArray = [data];
+  } else if (Array.isArray(data)) {
+    reservationsArray = data;
+  } else {
+    throw new Error("API response is not valid");
+  }
+
+  return reservationsArray.reduce(
+    (acc: Record<string, Reservation[]>, reservation: Reservation) => {
+      const date = reservation.reservation_date.split("T")[0];
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(reservation);
+      return acc;
+    },
+    {}
+  );
+};

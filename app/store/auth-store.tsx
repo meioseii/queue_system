@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-const BASE_URL = "http://16.176.47.117";
+const BASE_URL = "http://54.252.152.233";
 
 type LoginPayload = {
   username: string;
@@ -46,7 +46,7 @@ type AuthStore = {
 
 export const useAuthStore = create<AuthStore>((set) => ({
   loading: false,
-  token: "test",
+  token: null,
   changePasswordToken: null,
   error: null,
   message: null,

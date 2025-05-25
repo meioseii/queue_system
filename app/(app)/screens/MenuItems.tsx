@@ -16,13 +16,13 @@ export default function MenuItems() {
   const route = useRoute();
   const { category } = route.params as { category: string };
 
-  const { menuItems, fetchMenuItems, loading, error } = useAppStore();
+  const { menuItems, fetchMenuItems, loadingStates, error } = useAppStore();
 
   useEffect(() => {
     fetchMenuItems(category);
   }, [category]);
 
-  if (loading) {
+  if (loadingStates.fetchMenuItems) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#FF9500" />
