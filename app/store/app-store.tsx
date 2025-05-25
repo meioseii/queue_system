@@ -53,6 +53,7 @@ type LoadingState = {
   updateCart: boolean;
   deleteCart: boolean;
   fetchCart: boolean;
+  checkout: boolean;
 };
 
 type AppStore = {
@@ -85,6 +86,7 @@ type AppStore = {
   updateCartItem: (menuId: string, action: "add" | "deduct") => Promise<void>;
   deleteCartItem: (menuId: string) => Promise<void>;
   fetchCart: () => Promise<void>;
+  checkout: () => Promise<void>;
 };
 
 const initialLoadingState: LoadingState = {
@@ -100,6 +102,7 @@ const initialLoadingState: LoadingState = {
   updateCart: false,
   deleteCart: false,
   fetchCart: false,
+  checkout: false,
 };
 
 // API request wrapper with error handling
@@ -414,6 +417,29 @@ export const useAppStore = create<AppStore>((set) => ({
         set
       );
       set({ cartItems: data });
+    } catch (error) {
+      // Error already handled by apiRequest
+    }
+  },
+
+  checkout: async () => {
+    set({ loadingStates: { ...initialLoadingState, checkout: true } });
+    try {
+      const { token } = useAuthStore.getState();
+      await apiRequest(
+        "/orders/checkout",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+        "checkout",
+        set
+      );
+      // Clear cart after successful checkout
+      set({ cartItems: [] });
     } catch (error) {
       // Error already handled by apiRequest
     }

@@ -7,7 +7,13 @@ import {
   Poppins_400Regular,
   Poppins_700Bold,
 } from "@expo-google-fonts/poppins";
-import { IconButton, Text, Button, Divider } from "react-native-paper";
+import {
+  IconButton,
+  Text,
+  Button,
+  Divider,
+  Snackbar,
+} from "react-native-paper";
 import {
   View,
   StyleSheet,
@@ -39,6 +45,11 @@ type CartContentProps = {
     action: "add" | "deduct"
   ) => Promise<void>;
   handleDelete: (item: CartItem) => void;
+  checkout: () => Promise<void>;
+  loadingStates: {
+    checkout: boolean;
+    [key: string]: boolean;
+  };
 };
 
 export default function Orders() {
@@ -52,6 +63,7 @@ export default function Orders() {
     fetchAllMenuItems,
     updateCartItem,
     deleteCartItem,
+    checkout,
   } = useAppStore();
   const [refreshing, setRefreshing] = useState(false);
   const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
@@ -59,6 +71,7 @@ export default function Orders() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CartItem | null>(null);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   const [loaded, error] = useFonts({
     Poppins_400Regular,
@@ -130,6 +143,19 @@ export default function Orders() {
     };
   };
 
+  const handleCheckout = async () => {
+    try {
+      await checkout();
+      setShowSuccessMessage(true);
+      // Navigate to Menu after 2 seconds
+      setTimeout(() => {
+        navigation.navigate("Menu");
+      }, 2000);
+    } catch (error) {
+      // Error is already handled by the store
+    }
+  };
+
   if (!loaded && !error) {
     return null;
   }
@@ -170,14 +196,140 @@ export default function Orders() {
             </Button>
           </View>
         ) : (
-          <CartContent
-            cartItems={cartItems}
-            allMenuItems={allMenuItems}
-            updatingItemId={updatingItemId}
-            deletingItemId={deletingItemId}
-            handleQuantityUpdate={handleQuantityUpdate}
-            handleDelete={handleDeletePress}
-          />
+          <>
+            <View style={styles.cartList}>
+              {cartItems.map((item: CartItem) => {
+                const { img_url, price } = getMenuItemDetails(item.product_id);
+                const isUpdating = updatingItemId === item.product_id;
+                const isDeleting = deletingItemId === item.product_id;
+
+                return (
+                  <View key={item.product_id} style={styles.cartItem}>
+                    <Image
+                      source={{ uri: img_url }}
+                      style={[
+                        styles.itemImage,
+                        isDeleting && styles.disabledImage,
+                      ]}
+                      placeholder={blurhash}
+                      contentFit="cover"
+                      transition={200}
+                    />
+                    <View style={styles.cartItemDetails}>
+                      <Text
+                        style={[
+                          styles.productName,
+                          isDeleting && styles.disabledText,
+                        ]}
+                        numberOfLines={2}
+                      >
+                        {item.name}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.itemPrice,
+                          isDeleting && styles.disabledText,
+                        ]}
+                      >
+                        ₱{price.toFixed(2)}
+                      </Text>
+                      <View style={styles.bottomRow}>
+                        <View style={styles.quantityContainer}>
+                          <IconButton
+                            icon="minus"
+                            size={12}
+                            mode="contained"
+                            containerColor="#FF9500"
+                            iconColor="#FFF"
+                            style={[
+                              styles.quantityButton,
+                              (isUpdating || isDeleting) &&
+                                styles.disabledButton,
+                            ]}
+                            onPress={() =>
+                              handleQuantityUpdate(item.product_id, "deduct")
+                            }
+                            disabled={isUpdating || isDeleting}
+                          />
+                          <View style={styles.quantityWrapper}>
+                            {isUpdating ? (
+                              <ActivityIndicator size={16} color="#FF9500" />
+                            ) : (
+                              <Text
+                                style={[
+                                  styles.quantity,
+                                  isDeleting && styles.disabledText,
+                                ]}
+                              >
+                                {item.quantity}
+                              </Text>
+                            )}
+                          </View>
+                          <IconButton
+                            icon="plus"
+                            size={12}
+                            mode="contained"
+                            containerColor="#FF9500"
+                            iconColor="#FFF"
+                            style={[
+                              styles.quantityButton,
+                              (isUpdating || isDeleting) &&
+                                styles.disabledButton,
+                            ]}
+                            onPress={() =>
+                              handleQuantityUpdate(item.product_id, "add")
+                            }
+                            disabled={isUpdating || isDeleting}
+                          />
+                        </View>
+                        {isDeleting ? (
+                          <ActivityIndicator size={16} color="#FF4B4B" />
+                        ) : (
+                          <IconButton
+                            icon="delete-outline"
+                            size={14}
+                            iconColor="#FF4B4B"
+                            style={styles.deleteButton}
+                            onPress={() => handleDeletePress(item)}
+                          />
+                        )}
+                      </View>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+            <View style={styles.cartSummary}>
+              <Text style={styles.summaryTitle}>Order Summary</Text>
+              <View style={styles.summaryContent}>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Subtotal</Text>
+                  <Text style={styles.summaryValue}>
+                    ₱{subtotal.toFixed(2)}
+                  </Text>
+                </View>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Items</Text>
+                  <Text style={styles.summaryValue}>{totalItems}</Text>
+                </View>
+                <Divider style={styles.divider} />
+                <View style={[styles.summaryRow, styles.total]}>
+                  <Text style={styles.totalLabel}>Total</Text>
+                  <Text style={styles.totalValue}>₱{subtotal.toFixed(2)}</Text>
+                </View>
+              </View>
+              <Button
+                mode="contained"
+                style={styles.checkoutButton}
+                labelStyle={styles.checkoutButtonLabel}
+                onPress={handleCheckout}
+                loading={loadingStates.checkout}
+                disabled={loadingStates.checkout || cartItems.length === 0}
+              >
+                Place Order
+              </Button>
+            </View>
+          </>
         )}
       </ScrollView>
 
@@ -194,166 +346,22 @@ export default function Orders() {
         confirmColor="#FF4B4B"
         isLoading={loadingStates.deleteCart}
       />
+
+      <Snackbar
+        visible={showSuccessMessage}
+        onDismiss={() => setShowSuccessMessage(false)}
+        duration={2000}
+        style={styles.snackbar}
+        theme={{ colors: { surface: "#fff" } }}
+      >
+        <View style={styles.snackbarContent}>
+          <MaterialCommunityIcons name="check-circle" size={20} color="#fff" />
+          <Text style={styles.snackbarText}>Order placed successfully!</Text>
+        </View>
+      </Snackbar>
     </View>
   );
 }
-
-// Separate CartContent component to prevent unnecessary re-renders
-const CartContent = React.memo(
-  ({
-    cartItems,
-    allMenuItems,
-    updatingItemId,
-    deletingItemId,
-    handleQuantityUpdate,
-    handleDelete,
-  }: CartContentProps) => {
-    const getMenuItemDetails = (productId: string) => {
-      const menuItem = allMenuItems.find((item) => item.menu_id === productId);
-      return {
-        img_url: menuItem?.img_url || DEFAULT_IMAGE,
-        price: menuItem?.price || 0,
-      };
-    };
-
-    const totalItems = cartItems.reduce(
-      (sum: number, item: CartItem) => sum + item.quantity,
-      0
-    );
-    const subtotal = cartItems.reduce((sum: number, item: CartItem) => {
-      const { price } = getMenuItemDetails(item.product_id);
-      return sum + price * item.quantity;
-    }, 0);
-
-    return (
-      <>
-        <View style={styles.cartList}>
-          {cartItems.map((item: CartItem) => {
-            const { img_url, price } = getMenuItemDetails(item.product_id);
-            const isUpdating = updatingItemId === item.product_id;
-            const isDeleting = deletingItemId === item.product_id;
-
-            return (
-              <View key={item.product_id} style={styles.cartItem}>
-                <Image
-                  source={{ uri: img_url }}
-                  style={[styles.itemImage, isDeleting && styles.disabledImage]}
-                  placeholder={blurhash}
-                  contentFit="cover"
-                  transition={200}
-                />
-                <View style={styles.cartItemDetails}>
-                  <Text
-                    style={[
-                      styles.productName,
-                      isDeleting && styles.disabledText,
-                    ]}
-                    numberOfLines={2}
-                  >
-                    {item.name}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.itemPrice,
-                      isDeleting && styles.disabledText,
-                    ]}
-                  >
-                    ₱{price.toFixed(2)}
-                  </Text>
-                  <View style={styles.bottomRow}>
-                    <View style={styles.quantityContainer}>
-                      <IconButton
-                        icon="minus"
-                        size={12}
-                        mode="contained"
-                        containerColor="#FF9500"
-                        iconColor="#FFF"
-                        style={[
-                          styles.quantityButton,
-                          (isUpdating || isDeleting) && styles.disabledButton,
-                        ]}
-                        onPress={() =>
-                          handleQuantityUpdate(item.product_id, "deduct")
-                        }
-                        disabled={isUpdating || isDeleting}
-                      />
-                      <View style={styles.quantityWrapper}>
-                        {isUpdating ? (
-                          <ActivityIndicator size={16} color="#FF9500" />
-                        ) : (
-                          <Text
-                            style={[
-                              styles.quantity,
-                              isDeleting && styles.disabledText,
-                            ]}
-                          >
-                            {item.quantity}
-                          </Text>
-                        )}
-                      </View>
-                      <IconButton
-                        icon="plus"
-                        size={12}
-                        mode="contained"
-                        containerColor="#FF9500"
-                        iconColor="#FFF"
-                        style={[
-                          styles.quantityButton,
-                          (isUpdating || isDeleting) && styles.disabledButton,
-                        ]}
-                        onPress={() =>
-                          handleQuantityUpdate(item.product_id, "add")
-                        }
-                        disabled={isUpdating || isDeleting}
-                      />
-                    </View>
-                    {isDeleting ? (
-                      <ActivityIndicator size={16} color="#FF4B4B" />
-                    ) : (
-                      <IconButton
-                        icon="delete-outline"
-                        size={14}
-                        iconColor="#FF4B4B"
-                        style={styles.deleteButton}
-                        onPress={() => handleDelete(item)}
-                      />
-                    )}
-                  </View>
-                </View>
-              </View>
-            );
-          })}
-        </View>
-        <View style={styles.cartSummary}>
-          <Text style={styles.summaryTitle}>Order Summary</Text>
-          <View style={styles.summaryContent}>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Subtotal</Text>
-              <Text style={styles.summaryValue}>₱{subtotal.toFixed(2)}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Items</Text>
-              <Text style={styles.summaryValue}>{totalItems}</Text>
-            </View>
-            <Divider style={styles.divider} />
-            <View style={[styles.summaryRow, styles.total]}>
-              <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>₱{subtotal.toFixed(2)}</Text>
-            </View>
-          </View>
-          <Button
-            mode="contained"
-            style={styles.checkoutButton}
-            labelStyle={styles.checkoutButtonLabel}
-            onPress={() => console.log("Place Order")}
-          >
-            Place Order
-          </Button>
-        </View>
-      </>
-    );
-  }
-);
 
 const styles = StyleSheet.create({
   container: {
@@ -543,7 +551,7 @@ const styles = StyleSheet.create({
   },
   checkoutButton: {
     backgroundColor: "#FF9500",
-    paddingVertical: 8,
+    paddingVertical: 2,
     borderRadius: 12,
   },
   checkoutButtonLabel: {
@@ -551,7 +559,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   quantityWrapper: {
-    minWidth: 18,
+    minWidth: 24,
+    width: 24,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -563,5 +572,21 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.5,
+  },
+  snackbar: {
+    backgroundColor: "#FF9500",
+    marginHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 100,
+  },
+  snackbarContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  snackbarText: {
+    color: "#fff",
+    fontFamily: "Poppins_400Regular",
+    fontSize: 14,
   },
 });
