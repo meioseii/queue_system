@@ -10,12 +10,13 @@ type Reservation = {
   status: string;
 };
 
-type Category = {
+export type Category = {
   category_id: string;
   category: string;
   imageURL: string;
 };
-type MenuItem = {
+
+export type MenuItem = {
   menu_id: string;
   name: string;
   description: string;
@@ -31,14 +32,27 @@ type UserInfo = {
   username: string;
 };
 
+export type CartItem = {
+  product_id: string;
+  name: string;
+  quantity: number;
+  price?: number;
+  img_url?: string;
+};
+
 type LoadingState = {
   fetchReservations: boolean;
   fetchCategories: boolean;
   fetchMenuItems: boolean;
+  fetchAllMenuItems: boolean;
   fetchUserProfile: boolean;
   editUserProfile: boolean;
   createReservation: boolean;
   cancelReservation: boolean;
+  addToCart: boolean;
+  updateCart: boolean;
+  deleteCart: boolean;
+  fetchCart: boolean;
 };
 
 type AppStore = {
@@ -46,11 +60,14 @@ type AppStore = {
   reservations: Record<string, Reservation[]>;
   categories: Category[];
   menuItems: MenuItem[];
+  allMenuItems: MenuItem[];
+  cartItems: CartItem[];
   userInfo: UserInfo | null;
   error: string | null;
   fetchReservations: () => Promise<void>;
   fetchCategories: () => Promise<void>;
   fetchMenuItems: (category: string) => Promise<void>;
+  fetchAllMenuItems: () => Promise<void>;
   fetchUserProfile: () => Promise<void>;
   editUserProfile: (payload: {
     email: string;
@@ -64,16 +81,25 @@ type AppStore = {
     reservation_date: string;
   }) => Promise<void>;
   cancelReservation: (payload: { reservation_id: string }) => Promise<void>;
+  addToCart: (payload: CartItem) => Promise<void>;
+  updateCartItem: (menuId: string, action: "add" | "deduct") => Promise<void>;
+  deleteCartItem: (menuId: string) => Promise<void>;
+  fetchCart: () => Promise<void>;
 };
 
 const initialLoadingState: LoadingState = {
   fetchReservations: false,
   fetchCategories: false,
   fetchMenuItems: false,
+  fetchAllMenuItems: false,
   fetchUserProfile: false,
   editUserProfile: false,
   createReservation: false,
   cancelReservation: false,
+  addToCart: false,
+  updateCart: false,
+  deleteCart: false,
+  fetchCart: false,
 };
 
 // API request wrapper with error handling
@@ -112,6 +138,8 @@ export const useAppStore = create<AppStore>((set) => ({
   reservations: {},
   categories: [],
   menuItems: [],
+  allMenuItems: [],
+  cartItems: [],
   userInfo: null,
   error: null,
 
@@ -177,6 +205,28 @@ export const useAppStore = create<AppStore>((set) => ({
         set
       );
       set({ menuItems: data });
+    } catch (error) {
+      // Error already handled by apiRequest
+    }
+  },
+
+  fetchAllMenuItems: async () => {
+    set({ loadingStates: { ...initialLoadingState, fetchAllMenuItems: true } });
+    try {
+      const { token } = useAuthStore.getState();
+      const data = await apiRequest(
+        `/menu/all`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+        "fetchAllMenuItems",
+        set
+      );
+      set({ allMenuItems: data });
     } catch (error) {
       // Error already handled by apiRequest
     }
@@ -268,6 +318,102 @@ export const useAppStore = create<AppStore>((set) => ({
         set
       );
       await useAppStore.getState().fetchReservations();
+    } catch (error) {
+      // Error already handled by apiRequest
+    }
+  },
+
+  addToCart: async (payload: CartItem) => {
+    set({ loadingStates: { ...initialLoadingState, addToCart: true } });
+    try {
+      const { token } = useAuthStore.getState();
+      await apiRequest(
+        "/cart/add",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify([payload]),
+        },
+        "addToCart",
+        set
+      );
+      await useAppStore.getState().fetchCart();
+    } catch (error) {
+      // Error already handled by apiRequest
+    }
+  },
+
+  updateCartItem: async (menuId: string, action: "add" | "deduct") => {
+    set({ loadingStates: { ...initialLoadingState, updateCart: true } });
+    try {
+      const { token } = useAuthStore.getState();
+      await apiRequest(
+        "/cart/update",
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            menuId,
+            action,
+          }),
+        },
+        "updateCart",
+        set
+      );
+      await useAppStore.getState().fetchCart();
+    } catch (error) {
+      // Error already handled by apiRequest
+    }
+  },
+
+  deleteCartItem: async (menuId: string) => {
+    set({ loadingStates: { ...initialLoadingState, deleteCart: true } });
+    try {
+      const { token } = useAuthStore.getState();
+      await apiRequest(
+        "/cart/delete",
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            menuId,
+          }),
+        },
+        "deleteCart",
+        set
+      );
+      await useAppStore.getState().fetchCart();
+    } catch (error) {
+      // Error already handled by apiRequest
+    }
+  },
+
+  fetchCart: async () => {
+    set({ loadingStates: { ...initialLoadingState, fetchCart: true } });
+    try {
+      const { token } = useAuthStore.getState();
+      const data = await apiRequest(
+        "/cart/view",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+        "fetchCart",
+        set
+      );
+      set({ cartItems: data });
     } catch (error) {
       // Error already handled by apiRequest
     }
