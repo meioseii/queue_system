@@ -26,7 +26,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AppStackParamList } from "../app-types";
 import { useAppStore } from "../store/app-store";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import type { CartItem, MenuItem } from "../store/app-store";
+import type { MenuItem } from "../store/app-store";
 import { ConfirmationModal } from "./components";
 
 const blurhash =
@@ -35,8 +35,21 @@ const blurhash =
 const DEFAULT_IMAGE =
   "https://via.placeholder.com/300x200/FFEAD7/666666.png?text=No+Image";
 
+type CartItem = {
+  product_id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  img_url?: string;
+};
+
+type Cart = {
+  orders: CartItem[];
+  price: number;
+};
+
 type CartContentProps = {
-  cartItems: CartItem[];
+  cartItems: Cart;
   allMenuItems: MenuItem[];
   updatingItemId: string | null;
   deletingItemId: string | null;
@@ -65,6 +78,11 @@ export default function Orders() {
     deleteCartItem,
     checkout,
   } = useAppStore();
+
+  const cart = cartItems as unknown as Cart;
+  const orders = cart?.orders || [];
+  const totalPrice = cart?.price || 0;
+
   const [refreshing, setRefreshing] = useState(false);
   const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
   const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
@@ -88,12 +106,17 @@ export default function Orders() {
     const loadData = async () => {
       try {
         await Promise.all([fetchAllMenuItems(), fetchCart()]);
+        console.log("Cart Items:", JSON.stringify(cartItems, null, 2));
       } finally {
         setIsInitialLoading(false);
       }
     };
     loadData();
   }, []);
+
+  useEffect(() => {
+    console.log("Cart Items Updated:", JSON.stringify(cartItems, null, 2));
+  }, [cartItems]);
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
@@ -134,15 +157,6 @@ export default function Orders() {
     }
   };
 
-  // Function to get menu item details
-  const getMenuItemDetails = (productId: string) => {
-    const menuItem = allMenuItems.find((item) => item.menu_id === productId);
-    return {
-      img_url: menuItem?.img_url || DEFAULT_IMAGE,
-      price: menuItem?.price || 0,
-    };
-  };
-
   const handleCheckout = async () => {
     try {
       await checkout();
@@ -156,15 +170,19 @@ export default function Orders() {
     }
   };
 
+  const getMenuItemImage = (productId: string): string => {
+    const menuItem = allMenuItems.find((item) => item.menu_id === productId);
+    return menuItem?.img_url || DEFAULT_IMAGE;
+  };
+
   if (!loaded && !error) {
     return null;
   }
 
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  const subtotal = cartItems.reduce((sum, item) => {
-    const { price } = getMenuItemDetails(item.product_id);
-    return sum + price * item.quantity;
-  }, 0);
+  const totalItems = orders.reduce(
+    (sum: number, item: CartItem) => sum + item.quantity,
+    0
+  );
 
   return (
     <View style={styles.container}>
@@ -183,7 +201,7 @@ export default function Orders() {
           <View style={[styles.loadingContainer, { marginTop: 100 }]}>
             <ActivityIndicator size="large" color="#FF9500" />
           </View>
-        ) : cartItems.length === 0 ? (
+        ) : orders.length === 0 ? (
           <View style={styles.emptyContainer}>
             <MaterialCommunityIcons name="cart-off" size={64} color="#666" />
             <Text style={styles.emptyText}>Your cart is empty</Text>
@@ -191,6 +209,7 @@ export default function Orders() {
               mode="contained"
               onPress={() => navigation.navigate("Menu")}
               style={styles.browseButton}
+              labelStyle={styles.browseButtonLabel}
             >
               Browse Menu
             </Button>
@@ -198,15 +217,15 @@ export default function Orders() {
         ) : (
           <>
             <View style={styles.cartList}>
-              {cartItems.map((item: CartItem) => {
-                const { img_url, price } = getMenuItemDetails(item.product_id);
+              {orders.map((item: CartItem) => {
                 const isUpdating = updatingItemId === item.product_id;
                 const isDeleting = deletingItemId === item.product_id;
+                const imageUrl = getMenuItemImage(item.product_id);
 
                 return (
                   <View key={item.product_id} style={styles.cartItem}>
                     <Image
-                      source={{ uri: img_url }}
+                      source={{ uri: imageUrl }}
                       style={[
                         styles.itemImage,
                         isDeleting && styles.disabledImage,
@@ -231,7 +250,7 @@ export default function Orders() {
                           isDeleting && styles.disabledText,
                         ]}
                       >
-                        ₱{price.toFixed(2)}
+                        ₱{item.price.toFixed(2)}
                       </Text>
                       <View style={styles.bottomRow}>
                         <View style={styles.quantityContainer}>
@@ -305,7 +324,7 @@ export default function Orders() {
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Subtotal</Text>
                   <Text style={styles.summaryValue}>
-                    ₱{subtotal.toFixed(2)}
+                    ₱{totalPrice.toFixed(2)}
                   </Text>
                 </View>
                 <View style={styles.summaryRow}>
@@ -315,7 +334,9 @@ export default function Orders() {
                 <Divider style={styles.divider} />
                 <View style={[styles.summaryRow, styles.total]}>
                   <Text style={styles.totalLabel}>Total</Text>
-                  <Text style={styles.totalValue}>₱{subtotal.toFixed(2)}</Text>
+                  <Text style={styles.totalValue}>
+                    ₱{totalPrice.toFixed(2)}
+                  </Text>
                 </View>
               </View>
               <Button
@@ -324,7 +345,7 @@ export default function Orders() {
                 labelStyle={styles.checkoutButtonLabel}
                 onPress={handleCheckout}
                 loading={loadingStates.checkout}
-                disabled={loadingStates.checkout || cartItems.length === 0}
+                disabled={loadingStates.checkout || orders.length === 0}
               >
                 Place Order
               </Button>
@@ -491,6 +512,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#FF9500",
     borderRadius: 12,
     paddingHorizontal: 24,
+  },
+  browseButtonLabel: {
+    fontFamily: "Poppins_700Bold",
   },
   cartSummary: {
     backgroundColor: "#fff",
