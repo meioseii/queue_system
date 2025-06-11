@@ -18,8 +18,14 @@ import ConfirmationModal from "../components/ConfirmationModal";
 export default function MenuItems() {
   const route = useRoute();
   const { category } = route.params as { category: string };
-  const { menuItems, fetchMenuItems, loadingStates, error, addToCart } =
-    useAppStore();
+  const {
+    menuItems,
+    fetchMenuItems,
+    loadingStates,
+    error,
+    addToCart,
+    currentQueue,
+  } = useAppStore();
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -34,6 +40,10 @@ export default function MenuItems() {
   };
 
   const handleAddToCart = async (item: any) => {
+    if (!currentQueue || currentQueue.status !== "SEATED") {
+      showToast("Please wait until you are seated to add items to cart");
+      return;
+    }
     setSelectedItem(item);
     setModalVisible(true);
   };
@@ -73,6 +83,13 @@ export default function MenuItems() {
   return (
     <View style={styles.container}>
       <StatusBar hidden={false} backgroundColor="#FF9500" />
+      {!currentQueue || currentQueue.status !== "SEATED" ? (
+        <View style={styles.warningBanner}>
+          <Text style={styles.warningText}>
+            Please wait until you are seated to order
+          </Text>
+        </View>
+      ) : null}
       <FlatList
         data={menuItems}
         keyExtractor={(item) => item.menu_id}
@@ -87,12 +104,20 @@ export default function MenuItems() {
                 <Button
                   mode="contained"
                   onPress={() => handleAddToCart(item)}
-                  style={styles.addButton}
+                  style={[
+                    styles.addButton,
+                    (!currentQueue || currentQueue.status !== "SEATED") &&
+                      styles.disabledButton,
+                  ]}
                   loading={
                     loadingStates.addToCart &&
                     selectedItem?.menu_id === item.menu_id
                   }
-                  disabled={loadingStates.addToCart}
+                  disabled={
+                    loadingStates.addToCart ||
+                    !currentQueue ||
+                    currentQueue.status !== "SEATED"
+                  }
                 >
                   Add to Cart
                 </Button>
@@ -180,5 +205,17 @@ const styles = StyleSheet.create({
   },
   addButton: {
     backgroundColor: "#FF9500",
+  },
+  disabledButton: {
+    backgroundColor: "#CCCCCC",
+  },
+  warningBanner: {
+    backgroundColor: "#FFE5B4",
+    padding: 10,
+    alignItems: "center",
+  },
+  warningText: {
+    color: "#FF9500",
+    fontWeight: "bold",
   },
 });

@@ -10,6 +10,9 @@ export type AppStackParamList = {
   ChangePassword: undefined;
   EditProfile: undefined;
   QRScanner: undefined;
+  CreateQueue: {
+    accessCode: string;
+  };
 
   // Add other screens here if needed
 };

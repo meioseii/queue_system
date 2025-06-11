@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { StatusBar } from "expo-status-bar";
-import { Button, Text } from "react-native-paper";
+import { Button, Text, Card } from "react-native-paper";
 import {
   View,
   StyleSheet,
@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  ScrollView,
 } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { useAppStore } from "../store/app-store";
@@ -15,6 +16,8 @@ import { AppStackParamList } from "../app-types";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "expo-router";
 import Toast from "react-native-toast-message";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import ConfirmationModal from "./components/ConfirmationModal";
 
 type Reservation = {
   table_number: number;
@@ -31,18 +34,94 @@ export default function Home() {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedReservation, setSelectedReservation] =
     useState<Reservation | null>(null);
+  const pollingInterval = useRef<NodeJS.Timeout | null>(null);
+  const [showCancelQueueModal, setShowCancelQueueModal] = useState(false);
 
-  const { reservations, fetchReservations, loadingStates } = useAppStore(); // Use app-store for reservations
+  const {
+    reservations,
+    fetchReservations,
+    loadingStates,
+    currentQueue,
+    clearQueue,
+    checkQueueStatus,
+    checkLastSeated,
+    cancelQueue,
+    lastSeatedQueue,
+  } = useAppStore();
 
-  // Fetch reservations on component mount
+  // Check for existing queue and fetch reservations on mount
   useEffect(() => {
-    fetchReservations();
+    const initializeData = async () => {
+      try {
+        // Check for existing queue
+        await checkQueueStatus();
+      } catch (error) {
+        // If there's no active queue, the error is expected
+        console.log("No active queue found");
+      }
+      // Fetch reservations
+      await fetchReservations();
+    };
+
+    initializeData();
   }, []);
+
+  // Set up polling for queue status and last seated
+  useEffect(() => {
+    const startPolling = () => {
+      // Clear any existing interval
+      if (pollingInterval.current) {
+        clearInterval(pollingInterval.current);
+      }
+
+      // Only start polling if we have an active queue
+      if (currentQueue && currentQueue.status !== "SEATED") {
+        const pollQueue = async () => {
+          try {
+            const data = await checkQueueStatus();
+            // Check last seated queue using the tier from current queue
+            if (currentQueue.tier) {
+              await checkLastSeated(currentQueue.tier);
+            }
+            // If status is SEATED, stop polling
+            if (data.status === "SEATED") {
+              if (pollingInterval.current) {
+                clearInterval(pollingInterval.current);
+                pollingInterval.current = null;
+              }
+            }
+          } catch (error) {
+            console.error("Error checking queue status:", error);
+            // If there's an error, stop polling
+            if (pollingInterval.current) {
+              clearInterval(pollingInterval.current);
+              pollingInterval.current = null;
+            }
+          }
+        };
+
+        // Initial check
+        pollQueue();
+        // Set up interval for subsequent checks
+        pollingInterval.current = setInterval(pollQueue, 10000); // 10 seconds
+      }
+    };
+
+    startPolling();
+
+    // Cleanup function
+    return () => {
+      if (pollingInterval.current) {
+        clearInterval(pollingInterval.current);
+        pollingInterval.current = null;
+      }
+    };
+  }, [currentQueue?.queue_id]);
 
   const handleDayPress = (day: any) => {
     setSelectedDate(day.dateString);
     if (reservations[day.dateString]?.length) {
-      setSelectedReservation(reservations[day.dateString][0]); // Select the first reservation for simplicity
+      setSelectedReservation(reservations[day.dateString][0] as Reservation); // Add type assertion
       setModalVisible(true);
     }
   };
@@ -86,13 +165,87 @@ export default function Home() {
     );
   };
 
+  const handleClearQueue = async () => {
+    try {
+      await cancelQueue();
+      Toast.show({
+        type: "success",
+        text1: "Queue cancelled successfully",
+        visibilityTime: 3000,
+        autoHide: true,
+      });
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: error.message,
+        visibilityTime: 3000,
+        autoHide: true,
+      });
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      <View>
-        <View style={styles.header}>
-          <Text style={styles.headerText}>Home</Text>
-        </View>
-        <StatusBar hidden={false} backgroundColor="#FF9500" />
+    <View style={{ flex: 1, backgroundColor: "#FAF9F6" }}>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>Home</Text>
+      </View>
+      <StatusBar hidden={false} backgroundColor="#FF9500" />
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+      >
+        {currentQueue && (
+          <Card style={styles.queueCard}>
+            <Card.Content>
+              <View style={styles.queueHeader}>
+                <MaterialCommunityIcons
+                  name="ticket-confirmation"
+                  size={24}
+                  color="#FF9500"
+                />
+                <Text style={styles.queueTitle}>Queue Status</Text>
+              </View>
+              <View style={styles.queueInfo}>
+                <View style={styles.queueNumberContainer}>
+                  <Text style={styles.queueNumberLabel}>Your Number</Text>
+                  <Text style={styles.queueNumber}>
+                    {currentQueue.queueing_number}
+                  </Text>
+                </View>
+                <View style={styles.queueNumberContainer}>
+                  <Text style={styles.queueNumberLabel}>Now Serving</Text>
+                  <Text
+                    style={[
+                      styles.queueNumber,
+                      lastSeatedQueue?.queueingNumber ===
+                        currentQueue.queueing_number && styles.activeNumber,
+                    ]}
+                  >
+                    {lastSeatedQueue?.queueingNumber || "-"}
+                  </Text>
+                </View>
+              </View>
+            </Card.Content>
+            <Card.Actions style={styles.cardActions}>
+              {currentQueue.status === "SEATED" ? (
+                <Text style={[styles.statusText, styles.activeStatus]}>
+                  SEATED
+                </Text>
+              ) : (
+                <Button
+                  mode="text"
+                  onPress={() => setShowCancelQueueModal(true)}
+                  textColor="#FF4B4B"
+                  style={styles.clearButton}
+                >
+                  Cancel Queue
+                </Button>
+              )}
+            </Card.Actions>
+          </Card>
+        )}
 
         {loadingStates.fetchReservations ? (
           <View style={styles.loadingContainer}>
@@ -185,26 +338,42 @@ export default function Home() {
           >
             Reserve a Table
           </Button>
-          <Button
-            mode="contained"
-            onPress={() => navigation.navigate("QRScanner")}
-            style={styles.button}
-            labelStyle={styles.buttonText}
-          >
-            Start Queueing
-          </Button>
+          {!currentQueue && (
+            <Button
+              mode="contained"
+              onPress={() => navigation.navigate("QRScanner")}
+              style={styles.button}
+              labelStyle={styles.buttonText}
+            >
+              Start Queueing
+            </Button>
+          )}
         </View>
+        <ConfirmationModal
+          visible={showCancelQueueModal}
+          title="Cancel Queue"
+          message="Are you sure you want to cancel your queue number?"
+          onConfirm={handleClearQueue}
+          onCancel={() => setShowCancelQueueModal(false)}
+          cancelText="No"
+          confirmText="Yes"
+          confirmColor="#FF4B4B"
+          isLoading={loadingStates.cancelQueue}
+        />
         <Toast />
-      </View>
+      </ScrollView>
     </View>
   );
 }
 const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    paddingBottom: 100,
+  },
   container: {
-    height: "100%",
-    backgroundColor: "#FAF9F6",
-    marginTop: 35,
-    display: "flex",
+    flex: 1,
   },
   header: {
     backgroundColor: "#FF9500",
@@ -212,6 +381,7 @@ const styles = StyleSheet.create({
     paddingLeft: 15,
     paddingVertical: 10,
     borderRadius: 0,
+    marginTop: 35,
   },
   headerText: {
     fontFamily: "Poppins_400Regular",
@@ -297,5 +467,63 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  queueCard: {
+    margin: 20,
+    marginBottom: 0,
+    elevation: 4,
+    backgroundColor: "#FFF",
+  },
+  queueHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  queueTitle: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 18,
+    color: "#1A1A1A",
+    marginLeft: 10,
+  },
+  queueInfo: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  queueNumberContainer: {
+    alignItems: "center",
+    flex: 1,
+  },
+  queueNumberLabel: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 8,
+  },
+  queueNumber: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 28,
+    color: "#FF9500",
+  },
+  activeNumber: {
+    color: "#4CAF50",
+  },
+  clearButton: {
+    marginLeft: "auto",
+  },
+  cardActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+  },
+  statusText: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 16,
+    color: "#666",
+  },
+  activeStatus: {
+    color: "#4CAF50",
   },
 });

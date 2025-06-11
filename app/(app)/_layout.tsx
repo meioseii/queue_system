@@ -27,6 +27,7 @@ import SuccessReservation from "./screens/SuccessReservation";
 import ChangePassword from "./screens/ChangePassword";
 import EditProfile from "./screens/EditProfile";
 import QRScanner from "./QRScanner";
+import CreateQueue from "./screens/CreateQueue";
 
 const Tab = createBottomTabNavigator();
 
@@ -260,6 +261,23 @@ export default function AppLayout() {
           name="QRScanner"
           component={QRScanner}
           options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="CreateQueue"
+          component={CreateQueue}
+          options={{
+            title: "Start Queue",
+            headerShown: true,
+            headerStyle: {
+              backgroundColor: "#FF9500",
+            },
+            headerTitleStyle: {
+              fontFamily: "Poppins_400Regular",
+              fontSize: 16,
+              color: "#FFF",
+            },
+            headerTintColor: "#FFF",
+          }}
         />
       </Stack.Navigator>
     </NavigationIndependentTree>

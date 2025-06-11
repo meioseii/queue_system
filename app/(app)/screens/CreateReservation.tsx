@@ -145,6 +145,7 @@ export default function CreateReservation() {
                   value={value}
                   error={!!errors.guests}
                   style={styles.input}
+                  placeholder="Up to 6 people"
                   outlineStyle={styles.inputOutline}
                   contentStyle={[styles.inputContent, styles.inputText]}
                   theme={{

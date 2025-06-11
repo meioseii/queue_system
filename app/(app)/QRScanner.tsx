@@ -20,10 +20,8 @@ export default function QRScanner() {
 
   const handleScanData = (data: string) => {
     setScanned(true);
-    // Here you can handle the queue data
-    console.log("Scanned data:", data);
-    // Navigate to appropriate screen
-    navigation.navigate("Tabs");
+    // Navigate to CreateQueue screen with the scanned access code
+    navigation.navigate("CreateQueue", { accessCode: data });
   };
 
   if (!permission) {

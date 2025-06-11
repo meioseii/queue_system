@@ -10,6 +10,14 @@ type Reservation = {
   status: string;
 };
 
+type QueueInfo = {
+  queue_id: string;
+  queueing_number: string;
+  num_people: number;
+  status: string;
+  tier: number;
+};
+
 export type Category = {
   category_id: string;
   category: string;
@@ -54,9 +62,20 @@ type LoadingState = {
   deleteCart: boolean;
   fetchCart: boolean;
   checkout: boolean;
+  createQueue: boolean;
+  checkQueue: boolean;
+  cancelQueue: boolean;
+  checkLastSeated: boolean;
 };
 
-type AppStore = {
+type LastSeatedQueue = {
+  id: string;
+  tableNumber: number;
+  queueingNumber: string;
+  tier: number;
+};
+
+export type AppStore = {
   loadingStates: LoadingState;
   reservations: Record<string, Reservation[]>;
   categories: Category[];
@@ -65,6 +84,8 @@ type AppStore = {
   cartItems: CartItem[];
   userInfo: UserInfo | null;
   error: string | null;
+  currentQueue: QueueInfo | null;
+  lastSeatedQueue: LastSeatedQueue | null;
   fetchReservations: () => Promise<void>;
   fetchCategories: () => Promise<void>;
   fetchMenuItems: (category: string) => Promise<void>;
@@ -87,6 +108,14 @@ type AppStore = {
   deleteCartItem: (menuId: string) => Promise<void>;
   fetchCart: () => Promise<void>;
   checkout: () => Promise<void>;
+  createQueue: (payload: {
+    num_people: number;
+    accessCode: string;
+  }) => Promise<void>;
+  checkQueueStatus: () => Promise<QueueInfo>;
+  checkLastSeated: (tier: number) => Promise<void>;
+  cancelQueue: () => Promise<void>;
+  clearQueue: () => void;
 };
 
 const initialLoadingState: LoadingState = {
@@ -103,6 +132,10 @@ const initialLoadingState: LoadingState = {
   deleteCart: false,
   fetchCart: false,
   checkout: false,
+  createQueue: false,
+  checkQueue: false,
+  cancelQueue: false,
+  checkLastSeated: false,
 };
 
 // API request wrapper with error handling
@@ -136,7 +169,7 @@ const apiRequest = async (
   }
 };
 
-export const useAppStore = create<AppStore>((set) => ({
+export const useAppStore = create<AppStore>((set, get) => ({
   loadingStates: initialLoadingState,
   reservations: {},
   categories: [],
@@ -145,6 +178,8 @@ export const useAppStore = create<AppStore>((set) => ({
   cartItems: [],
   userInfo: null,
   error: null,
+  currentQueue: null,
+  lastSeatedQueue: null,
 
   fetchReservations: async () => {
     try {
@@ -442,6 +477,119 @@ export const useAppStore = create<AppStore>((set) => ({
       set({ cartItems: [] });
     } catch (error) {
       // Error already handled by apiRequest
+    }
+  },
+
+  createQueue: async (payload) => {
+    set({ loadingStates: { ...initialLoadingState, createQueue: true } });
+    try {
+      const { token } = useAuthStore.getState();
+      const data = await apiRequest(
+        "/queue/create",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        },
+        "createQueue",
+        set
+      );
+      set({ currentQueue: data });
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  clearQueue: () => {
+    set({ currentQueue: null });
+  },
+
+  checkQueueStatus: async () => {
+    set({ loadingStates: { ...initialLoadingState, checkQueue: true } });
+    try {
+      const { token } = useAuthStore.getState();
+      const data = await apiRequest(
+        "/queue/check",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+        "checkQueue",
+        set
+      );
+
+      // Update current queue with latest status
+      set({ currentQueue: data });
+
+      return data;
+    } catch (error) {
+      // If the request fails (e.g., no active queue), clear the queue state
+      set({ currentQueue: null });
+      throw error;
+    } finally {
+      set((state) => ({
+        loadingStates: { ...state.loadingStates, checkQueue: false },
+      }));
+    }
+  },
+
+  cancelQueue: async () => {
+    set({ loadingStates: { ...initialLoadingState, cancelQueue: true } });
+    try {
+      const { token } = useAuthStore.getState();
+      await apiRequest(
+        "/queue/cancel",
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+        "cancelQueue",
+        set
+      );
+
+      // Clear queue state after successful cancellation
+      get().clearQueue();
+    } catch (error) {
+      throw error;
+    } finally {
+      set((state) => ({
+        loadingStates: { ...state.loadingStates, cancelQueue: false },
+      }));
+    }
+  },
+
+  checkLastSeated: async (tier: number) => {
+    set({ loadingStates: { ...initialLoadingState, checkLastSeated: true } });
+    try {
+      const { token } = useAuthStore.getState();
+      const data = await apiRequest(
+        `/queue/last-seated/${tier}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+        "checkLastSeated",
+        set
+      );
+      set({ lastSeatedQueue: data });
+    } catch (error) {
+      console.error("Error checking last seated queue:", error);
+    } finally {
+      set((state) => ({
+        loadingStates: { ...state.loadingStates, checkLastSeated: false },
+      }));
     }
   },
 }));
