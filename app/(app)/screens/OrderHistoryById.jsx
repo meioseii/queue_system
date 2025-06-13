@@ -10,27 +10,29 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import Toast from "react-native-toast-message";
 import { useAppStore } from "../../store/app-store";
 
-export default function RunningBill() {
+export default function OrderHistoryById() {
   const navigation = useNavigation();
+  const route = useRoute();
+  const { orderId } = route.params;
   const [refreshing, setRefreshing] = useState(false);
 
-  const { runningBillData, loadingStates, fetchRunningBill, completeOrder } =
+  const { orderHistoryDetail, loadingStates, fetchOrderHistoryById } =
     useAppStore();
 
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      await fetchRunningBill();
+      await fetchOrderHistoryById(orderId);
     } catch (error) {
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "Failed to load running bill",
+        text2: "Failed to load order details",
         visibilityTime: 3000,
         autoHide: true,
       });
@@ -39,47 +41,22 @@ export default function RunningBill() {
     }
   };
 
-  const handleCompleteOrder = async () => {
-    try {
-      await completeOrder();
-      Toast.show({
-        type: "success",
-        text1: "Order Completed",
-        text2: "Thank you for dining with us!",
-        visibilityTime: 3000,
-        autoHide: true,
-      });
-      // Navigate back to Home after completion
-      setTimeout(() => {
-        navigation.navigate("Tabs");
-      }, 2000);
-    } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: error.message,
-        visibilityTime: 3000,
-        autoHide: true,
-      });
-    }
-  };
-
   useEffect(() => {
-    const loadBill = async () => {
+    const loadOrderDetail = async () => {
       try {
-        await fetchRunningBill();
+        await fetchOrderHistoryById(orderId);
       } catch (error) {
         Toast.show({
           type: "error",
           text1: "Error",
-          text2: "Failed to load running bill",
+          text2: "Failed to load order details",
           visibilityTime: 3000,
           autoHide: true,
         });
       }
     };
-    loadBill();
-  }, []);
+    loadOrderDetail();
+  }, [orderId]);
 
   const renderOrderItem = ({ item }) => (
     <View style={styles.orderItem}>
@@ -96,11 +73,11 @@ export default function RunningBill() {
     </View>
   );
 
-  if (loadingStates.fetchRunningBill && !runningBillData) {
+  if (loadingStates.fetchOrderHistoryById && !orderHistoryDetail) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#FF9500" />
-        <Text style={styles.loadingText}>Loading your bill...</Text>
+        <Text style={styles.loadingText}>Loading order details...</Text>
       </View>
     );
   }
@@ -122,13 +99,13 @@ export default function RunningBill() {
         >
           <MaterialCommunityIcons name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Running Bill</Text>
+        <Text style={styles.headerTitle}>Order Details</Text>
         <View style={styles.headerRight} />
       </LinearGradient>
 
-      {runningBillData ? (
+      {orderHistoryDetail ? (
         <FlatList
-          data={runningBillData.orders}
+          data={orderHistoryDetail.orders}
           keyExtractor={(item, index) => `${item.product_id}-${index}`}
           renderItem={renderOrderItem}
           style={styles.ordersList}
@@ -146,7 +123,9 @@ export default function RunningBill() {
                     color="#666"
                   />
                   <Text style={styles.billDetailText}>
-                    {new Date(runningBillData.orderDate).toLocaleDateString()}
+                    {new Date(
+                      orderHistoryDetail.orderDate
+                    ).toLocaleDateString()}
                   </Text>
                 </View>
                 <View style={styles.billInfoRow}>
@@ -156,7 +135,7 @@ export default function RunningBill() {
                     color="#666"
                   />
                   <Text style={styles.billDetailText}>
-                    {new Date(runningBillData.orderDate).toLocaleTimeString(
+                    {new Date(orderHistoryDetail.orderDate).toLocaleTimeString(
                       [],
                       {
                         hour: "2-digit",
@@ -165,7 +144,7 @@ export default function RunningBill() {
                     )}
                   </Text>
                 </View>
-                {runningBillData.tableNumber > 0 && (
+                {orderHistoryDetail.tableNumber > 0 && (
                   <View style={styles.billInfoRow}>
                     <MaterialCommunityIcons
                       name="table-furniture"
@@ -173,10 +152,18 @@ export default function RunningBill() {
                       color="#666"
                     />
                     <Text style={styles.billDetailText}>
-                      Table {runningBillData.tableNumber}
+                      Table {orderHistoryDetail.tableNumber}
                     </Text>
                   </View>
                 )}
+                <View style={styles.statusBadge}>
+                  <MaterialCommunityIcons
+                    name="check-circle"
+                    size={16}
+                    color="#4CAF50"
+                  />
+                  <Text style={styles.statusText}>Paid</Text>
+                </View>
               </View>
               <Text style={styles.ordersTitle}>Order Items</Text>
             </View>
@@ -187,34 +174,10 @@ export default function RunningBill() {
                 <View style={styles.totalRow}>
                   <Text style={styles.totalLabel}>Total Amount:</Text>
                   <Text style={styles.totalAmount}>
-                    ₱{runningBillData.total.toFixed(2)}
+                    ₱{orderHistoryDetail.total.toFixed(2)}
                   </Text>
                 </View>
               </View>
-
-              <TouchableOpacity
-                style={[
-                  styles.completeButton,
-                  loadingStates.doneQueue && styles.disabledButton,
-                ]}
-                onPress={handleCompleteOrder}
-                disabled={loadingStates.doneQueue}
-              >
-                {loadingStates.doneQueue ? (
-                  <ActivityIndicator size="small" color="#FFF" />
-                ) : (
-                  <>
-                    <MaterialCommunityIcons
-                      name="check-circle"
-                      size={20}
-                      color="#FFF"
-                    />
-                    <Text style={styles.completeButtonText}>
-                      Complete Order
-                    </Text>
-                  </>
-                )}
-              </TouchableOpacity>
             </View>
           }
         />
@@ -225,7 +188,7 @@ export default function RunningBill() {
             size={64}
             color="#CCC"
           />
-          <Text style={styles.emptyText}>No bill data available</Text>
+          <Text style={styles.emptyText}>No order details available</Text>
           <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
             <Text style={styles.refreshButtonText}>Refresh</Text>
           </TouchableOpacity>
@@ -298,6 +261,22 @@ const styles = StyleSheet.create({
     color: "#666",
     fontFamily: "Poppins_400Regular",
   },
+  statusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#E8F5E8",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    alignSelf: "flex-start",
+    marginTop: 8,
+  },
+  statusText: {
+    marginLeft: 6,
+    fontSize: 12,
+    color: "#4CAF50",
+    fontFamily: "Poppins_600SemiBold",
+  },
   ordersTitle: {
     fontSize: 18,
     fontWeight: "bold",
@@ -364,7 +343,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 2,
     borderTopColor: "#E0E0E0",
     paddingTop: 15,
-    marginBottom: 20,
   },
   totalRow: {
     flexDirection: "row",
@@ -382,25 +360,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#FF9500",
     fontFamily: "Poppins_700Bold",
-  },
-  completeButton: {
-    backgroundColor: "#4CAF50",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 15,
-    borderRadius: 10,
-    elevation: 2,
-  },
-  completeButtonText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginLeft: 8,
-    fontFamily: "Poppins_600SemiBold",
-  },
-  disabledButton: {
-    opacity: 0.6,
   },
   emptyContainer: {
     flex: 1,

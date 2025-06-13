@@ -29,6 +29,8 @@ import EditProfile from "./screens/EditProfile";
 import QRScanner from "./QRScanner";
 import CreateQueue from "./screens/CreateQueue";
 import RunningBill from "./screens/RunningBill";
+import OrderHistory from "./screens/OrderHistory";
+import OrderHistoryById from "./screens/OrderHistoryById";
 
 const Tab = createBottomTabNavigator();
 
@@ -283,6 +285,16 @@ export default function AppLayout() {
         <Stack.Screen
           name="RunningBill"
           component={RunningBill}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="OrderHistory"
+          component={OrderHistory}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="OrderHistoryById"
+          component={OrderHistoryById}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

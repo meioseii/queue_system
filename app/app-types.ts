@@ -13,6 +13,6 @@ export type AppStackParamList = {
   CreateQueue: {
     accessCode: string;
   };
-
+  OrderHistory: undefined; // Add this line
   // Add other screens here if needed
 };

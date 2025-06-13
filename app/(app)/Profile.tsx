@@ -142,7 +142,7 @@ export default function Profile() {
         <ProfileOption
           title="Order History"
           icon="receipt-long"
-          onPress={() => navigation.navigate("Tabs")}
+          onPress={() => navigation.navigate("OrderHistory")}
         />
         <ProfileOption
           title="Logout"
