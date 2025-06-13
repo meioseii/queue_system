@@ -48,6 +48,19 @@ export type CartItem = {
   img_url?: string;
 };
 
+// Add RunningBill type
+type RunningBillData = {
+  orderDate: string;
+  tableNumber: number;
+  orders: {
+    product_id: string;
+    name: string;
+    price: number;
+    quantity: number;
+  }[];
+  total: number;
+};
+
 type LoadingState = {
   fetchReservations: boolean;
   fetchCategories: boolean;
@@ -67,6 +80,7 @@ type LoadingState = {
   cancelQueue: boolean;
   checkLastSeated: boolean;
   doneQueue: boolean;
+  fetchRunningBill: boolean; // Add this
 };
 
 type LastSeatedQueue = {
@@ -87,6 +101,7 @@ export type AppStore = {
   error: string | null;
   currentQueue: QueueInfo | null;
   lastSeatedQueue: LastSeatedQueue | null;
+  runningBillData: RunningBillData | null; // Add this
   fetchReservations: () => Promise<void>;
   fetchCategories: () => Promise<void>;
   fetchMenuItems: (category: string) => Promise<void>;
@@ -118,6 +133,8 @@ export type AppStore = {
   cancelQueue: () => Promise<void>;
   clearQueue: () => void;
   doneQueue: () => Promise<void>;
+  fetchRunningBill: () => Promise<void>; // Add this
+  completeOrder: () => Promise<void>; // Add this
 };
 
 const initialLoadingState: LoadingState = {
@@ -139,6 +156,7 @@ const initialLoadingState: LoadingState = {
   cancelQueue: false,
   checkLastSeated: false,
   doneQueue: false,
+  fetchRunningBill: false, // Add this
 };
 
 // API request wrapper with error handling
@@ -183,6 +201,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   error: null,
   currentQueue: null,
   lastSeatedQueue: null,
+  runningBillData: null, // Add this
 
   fetchReservations: async () => {
     try {
@@ -621,6 +640,41 @@ export const useAppStore = create<AppStore>((set, get) => ({
       set((state) => ({
         loadingStates: { ...state.loadingStates, doneQueue: false },
       }));
+    }
+  },
+
+  // Add the new fetchRunningBill function
+  fetchRunningBill: async () => {
+    set({ loadingStates: { ...initialLoadingState, fetchRunningBill: true } });
+    try {
+      const { token } = useAuthStore.getState();
+      const data = await apiRequest(
+        "/customer/order-history/orders",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+        "fetchRunningBill",
+        set
+      );
+      set({ runningBillData: data });
+    } catch (error) {
+      // Error already handled by apiRequest
+      throw error;
+    }
+  },
+
+  // Add the new completeOrder function
+  completeOrder: async () => {
+    try {
+      await get().doneQueue();
+      // Clear running bill data after successful completion
+      set({ runningBillData: null });
+    } catch (error) {
+      throw error;
     }
   },
 }));

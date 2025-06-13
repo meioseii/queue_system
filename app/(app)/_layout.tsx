@@ -28,6 +28,7 @@ import ChangePassword from "./screens/ChangePassword";
 import EditProfile from "./screens/EditProfile";
 import QRScanner from "./QRScanner";
 import CreateQueue from "./screens/CreateQueue";
+import RunningBill from "./screens/RunningBill";
 
 const Tab = createBottomTabNavigator();
 
@@ -278,6 +279,11 @@ export default function AppLayout() {
             },
             headerTintColor: "#FFF",
           }}
+        />
+        <Stack.Screen
+          name="RunningBill"
+          component={RunningBill}
+          options={{ headerShown: false }}
         />
       </Stack.Navigator>
     </NavigationIndependentTree>

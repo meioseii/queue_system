@@ -346,19 +346,18 @@ export default function Home() {
                     </View>
                     <TouchableOpacity
                       style={[
-                        styles.doneButton,
+                        styles.viewBillButton,
                         loadingStates.doneQueue && styles.disabledButton,
                       ]}
-                      onPress={handleDoneQueue}
+                      onPress={() => navigation.navigate("RunningBill")}
                       disabled={loadingStates.doneQueue}
                     >
-                      {loadingStates.doneQueue ? (
-                        <ActivityIndicator size="small" color="#FFF" />
-                      ) : (
-                        <Text style={styles.doneButtonText}>
-                          Complete Order
-                        </Text>
-                      )}
+                      <MaterialCommunityIcons
+                        name="receipt"
+                        size={18}
+                        color="#FFF"
+                      />
+                      <Text style={styles.viewBillButtonText}>See Bill</Text>
                     </TouchableOpacity>
                   </View>
                 ) : (
@@ -760,5 +759,20 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.6,
+  },
+  viewBillButton: {
+    backgroundColor: "#4CAF50",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    elevation: 2,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  viewBillButtonText: {
+    color: "#FFF",
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 14,
+    marginLeft: 6,
   },
 });
