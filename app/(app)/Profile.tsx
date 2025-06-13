@@ -119,7 +119,7 @@ export default function Profile() {
         <Text style={styles.headerText}>Profile</Text>
       </View>
 
-      <StatusBar hidden={false} backgroundColor="#FF9500" />
+      <StatusBar hidden={false} backgroundColor="#FFF" />
 
       <View style={styles.userInfoContainer}>
         <Text style={styles.userName}>

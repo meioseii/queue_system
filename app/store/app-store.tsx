@@ -66,6 +66,7 @@ type LoadingState = {
   checkQueue: boolean;
   cancelQueue: boolean;
   checkLastSeated: boolean;
+  doneQueue: boolean;
 };
 
 type LastSeatedQueue = {
@@ -116,6 +117,7 @@ export type AppStore = {
   checkLastSeated: (tier: number) => Promise<void>;
   cancelQueue: () => Promise<void>;
   clearQueue: () => void;
+  doneQueue: () => Promise<void>;
 };
 
 const initialLoadingState: LoadingState = {
@@ -136,6 +138,7 @@ const initialLoadingState: LoadingState = {
   checkQueue: false,
   cancelQueue: false,
   checkLastSeated: false,
+  doneQueue: false,
 };
 
 // API request wrapper with error handling
@@ -589,6 +592,34 @@ export const useAppStore = create<AppStore>((set, get) => ({
     } finally {
       set((state) => ({
         loadingStates: { ...state.loadingStates, checkLastSeated: false },
+      }));
+    }
+  },
+
+  doneQueue: async () => {
+    set({ loadingStates: { ...initialLoadingState, doneQueue: true } });
+    try {
+      const { token } = useAuthStore.getState();
+      await apiRequest(
+        "/queue/done",
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+        "doneQueue",
+        set
+      );
+
+      // Clear queue state after successful completion
+      get().clearQueue();
+    } catch (error) {
+      throw error;
+    } finally {
+      set((state) => ({
+        loadingStates: { ...state.loadingStates, doneQueue: false },
       }));
     }
   },

@@ -56,7 +56,7 @@ export default function Menu() {
       <View style={styles.header}>
         <Text style={styles.headerText}>Menu</Text>
       </View>
-      <StatusBar hidden={false} backgroundColor="#FF9500"></StatusBar>
+      <StatusBar hidden={false} backgroundColor="#FFF"></StatusBar>
       <FlashList
         data={categories}
         numColumns={2}

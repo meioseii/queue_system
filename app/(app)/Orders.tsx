@@ -189,7 +189,7 @@ export default function Orders() {
       <View style={styles.header}>
         <Text style={styles.headerText}>Cart</Text>
       </View>
-      <StatusBar hidden={false} backgroundColor="#FF9500" />
+      <StatusBar hidden={false} backgroundColor="#FFF" />
 
       <ScrollView
         style={styles.scrollView}
