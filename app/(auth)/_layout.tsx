@@ -18,42 +18,37 @@ export default function AuthLayout() {
   return (
     <>
       <NavigationIndependentTree>
-        <Stack.Navigator>
-          {changePasswordToken ? (
-            <Stack.Screen
-              name="ChangePassword"
-              component={ChangePassword}
-              options={{ headerShown: false }}
-            />
-          ) : (
-            <>
-              <Stack.Screen
-                name="Login"
-                component={Login}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="Register"
-                component={Register}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="Success"
-                component={Success}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="SendOTP"
-                component={SendOTP}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="VerifyOTP"
-                component={VerifyOTP}
-                options={{ headerShown: false }}
-              />
-            </>
-          )}
+        <Stack.Navigator initialRouteName="Login">
+          <Stack.Screen
+            name="Login"
+            component={Login}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Register"
+            component={Register}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Success"
+            component={Success}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="SendOTP"
+            component={SendOTP}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="VerifyOTP"
+            component={VerifyOTP}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ChangePassword"
+            component={ChangePassword}
+            options={{ headerShown: false }}
+          />
         </Stack.Navigator>
       </NavigationIndependentTree>
       <Toast />

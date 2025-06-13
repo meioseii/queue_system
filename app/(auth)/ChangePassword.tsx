@@ -45,8 +45,31 @@ export default function ChangePassword() {
       try {
         if (email) {
           await changePassword({ email, newPassword: data.newPassword });
+
+          // Show success toast
+          Toast.show({
+            type: "success",
+            text1: "Success!",
+            text2: "Password changed successfully. Redirecting to login...",
+            visibilityTime: 3000,
+            autoHide: true,
+            position: "top",
+          });
+
+          // Navigate to Login after 3 seconds
+          setTimeout(() => {
+            navigation.navigate("Login");
+          }, 3000);
+        } else {
+          Toast.show({
+            type: "error",
+            text1: "Error",
+            text2: "Email not found. Please try again.",
+            visibilityTime: 3000,
+            autoHide: true,
+            position: "top",
+          });
         }
-        navigation.navigate("Login");
       } catch (err: any) {
         Toast.show({
           type: "error",
@@ -193,6 +216,7 @@ export default function ChangePassword() {
           </Text>
         </Button>
       </View>
+      <Toast />
     </View>
   );
 }

@@ -39,7 +39,7 @@ export default function SendOTP() {
   const onSubmit = async (data: FormData) => {
     try {
       await sendOtp({ email: data.email });
-      navigation.navigate("VerifyOTP");
+      navigation.navigate("VerifyOTP", { email: data.email });
     } catch (err: any) {
       Toast.show({
         type: "error",

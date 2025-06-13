@@ -6,7 +6,7 @@ import {
   Poppins_700Bold,
 } from "@expo-google-fonts/poppins";
 import { Button, Text, Icon } from "react-native-paper";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AuthStackParamList } from "../auth-types";
 import { StatusBar } from "expo-status-bar";
@@ -21,8 +21,31 @@ type FormData = {
 };
 
 export default function VerifyOTP() {
-  type Navigation = NativeStackNavigationProp<AuthStackParamList, "SendOTP">;
+  type Navigation = NativeStackNavigationProp<AuthStackParamList, "VerifyOTP">;
   const navigation = useNavigation<Navigation>();
+  const route = useRoute<RouteProp<AuthStackParamList, "VerifyOTP">>();
+
+  // Get email from route parameters
+  const emailFromParams = route.params?.email;
+  const { email: emailFromStore, sendOtp, verifyOtp, loading } = useAuthStore();
+
+  // Use email from params as priority, fallback to store
+  const currentEmail = emailFromParams || emailFromStore;
+
+  const [currentOtp, setCurrentOtp] = useState("");
+
+  const [otpPayload, setOtpPayload] = useState<FormData>({
+    email: currentEmail || "",
+    otp: "",
+  });
+
+  // Update otpPayload when currentOtp changes
+  useEffect(() => {
+    setOtpPayload({
+      email: currentEmail || "",
+      otp: currentOtp,
+    });
+  }, [currentOtp, currentEmail]);
 
   const [countdown, setCountdown] = useState(0);
   const [isResendDisabled, setIsResendDisabled] = useState(true);
@@ -30,13 +53,6 @@ export default function VerifyOTP() {
   const [loaded, error] = useFonts({
     Poppins_400Regular,
     Poppins_700Bold,
-  });
-
-  const { email, sendOtp, verifyOtp, loading } = useAuthStore();
-
-  const [otpPayload, setOtpPayload] = useState({
-    email: email,
-    otp: "",
   });
 
   useEffect(() => {
@@ -57,8 +73,8 @@ export default function VerifyOTP() {
     setCountdown(30);
     setIsResendDisabled(true);
 
-    if (email) {
-      sendOtp({ email });
+    if (currentEmail) {
+      sendOtp({ email: currentEmail });
     }
   };
 
@@ -73,12 +89,14 @@ export default function VerifyOTP() {
   }
 
   const handleOnFilled = (otp: string) => {
-    setOtpPayload({ ...otpPayload, otp });
+    setCurrentOtp(otp);
   };
 
   const submit = async (otpPayload: FormData) => {
+    console.log("OTP filled:", otpPayload);
+
     try {
-      if (email) {
+      if (currentEmail) {
         const token = await verifyOtp(otpPayload);
         if (token) {
           navigation.navigate("ChangePassword");
@@ -96,6 +114,8 @@ export default function VerifyOTP() {
       });
     }
   };
+
+  console.log("Email in VerifyOTP:", currentEmail);
 
   return (
     <View style={styles.container}>
@@ -123,7 +143,7 @@ export default function VerifyOTP() {
           }}
         />
         <Text style={{ fontFamily: "Poppins_400Regular", marginVertical: 5 }}>
-          We’ve sent the OTP code to {email}.
+          We’ve sent the OTP code to {currentEmail}.
         </Text>
         <Text
           style={{
@@ -161,7 +181,7 @@ export default function VerifyOTP() {
           onPress={() => submit(otpPayload as FormData)}
           style={{ marginTop: 10 }}
           buttonColor="#FF9500"
-          disabled={loading}
+          disabled={loading || otpPayload.otp.length !== 6}
           loading={loading}
         >
           <Text style={{ fontFamily: "Poppins_700Bold", color: "white" }}>

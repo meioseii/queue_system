@@ -160,16 +160,16 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
   changePassword: async ({ email, newPassword }) => {
     set({ loading: true, error: null });
-    const { token } = useAuthStore.getState();
+    const { changePasswordToken } = useAuthStore.getState(); // Use changePasswordToken instead
 
     try {
       const response = await fetch(`${BASE_URL}/customer/change-password`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${changePasswordToken}`, // Use changePasswordToken
         },
-        body: JSON.stringify({ email, newPassword }),
+        body: JSON.stringify({ newPassword }),
       });
 
       const data = await response.json();
@@ -180,7 +180,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
         );
       }
 
-      set({ changePasswordToken: null });
+      set({ changePasswordToken: null, email: null }); // Clear both tokens and email
     } catch (err: any) {
       set({ error: err.message });
       throw err;
