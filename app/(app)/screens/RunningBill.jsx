@@ -7,6 +7,14 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Modal,
+  TextInput,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -18,9 +26,24 @@ import { useAppStore } from "../../store/app-store";
 export default function RunningBill() {
   const navigation = useNavigation();
   const [refreshing, setRefreshing] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [description, setDescription] = useState("");
 
-  const { runningBillData, loadingStates, fetchRunningBill, completeOrder } =
-    useAppStore();
+  const {
+    runningBillData,
+    loadingStates,
+    fetchRunningBill,
+    completeOrder,
+    returnOrder,
+  } = useAppStore();
+
+  // Helper function to safely format numbers
+  const formatPrice = (price) => {
+    return typeof price === "number" && !isNaN(price)
+      ? price.toFixed(2)
+      : "0.00";
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -37,6 +60,63 @@ export default function RunningBill() {
     } finally {
       setRefreshing(false);
     }
+  };
+
+  const handleOrderPress = (order) => {
+    setSelectedOrder(order);
+    setDescription("");
+    setModalVisible(true);
+  };
+
+  const handleReturnOrder = async () => {
+    if (!description.trim()) {
+      Toast.show({
+        type: "error",
+        text1: "Description Required",
+        text2: "Please provide a description for the return",
+        visibilityTime: 3000,
+        autoHide: true,
+      });
+      return;
+    }
+
+    Alert.alert("Return Order", "Are you sure you want to return this order?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Return",
+        onPress: async () => {
+          try {
+            await returnOrder({
+              id: selectedOrder.id,
+              description: description.trim(),
+            });
+
+            Toast.show({
+              type: "success",
+              text1: "Order Returned",
+              text2: "Your order return request has been submitted",
+              visibilityTime: 3000,
+              autoHide: true,
+            });
+
+            setModalVisible(false);
+            setSelectedOrder(null);
+            setDescription("");
+          } catch (error) {
+            Toast.show({
+              type: "error",
+              text1: "Return Failed",
+              text2: error.message || "Failed to return order",
+              visibilityTime: 3000,
+              autoHide: true,
+            });
+          }
+        },
+      },
+    ]);
   };
 
   const handleCompleteOrder = async () => {
@@ -57,7 +137,7 @@ export default function RunningBill() {
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: error.message,
+        text2: error.message || "Failed to complete order",
         visibilityTime: 3000,
         autoHide: true,
       });
@@ -81,20 +161,90 @@ export default function RunningBill() {
     loadBill();
   }, []);
 
-  const renderOrderItem = ({ item }) => (
-    <View style={styles.orderItem}>
-      <View style={styles.orderInfo}>
-        <Text style={styles.itemName}>{item.name}</Text>
-        <Text style={styles.itemPrice}>₱{item.price.toFixed(2)}</Text>
-      </View>
-      <View style={styles.quantityContainer}>
-        <Text style={styles.quantityText}>Qty: {item.quantity}</Text>
-        <Text style={styles.subtotalText}>
-          ₱{(item.price * item.quantity).toFixed(2)}
-        </Text>
-      </View>
-    </View>
-  );
+  const renderOrderCard = ({ item }) => {
+    const orderDate = new Date(item.orderDate);
+    const dateString = orderDate.toLocaleDateString();
+    const timeString = orderDate.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    return (
+      <TouchableOpacity
+        style={styles.orderCard}
+        onPress={() => handleOrderPress(item)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.orderHeader}>
+          <View style={styles.orderInfo}>
+            <View style={styles.dateTimeContainer}>
+              <MaterialCommunityIcons name="calendar" size={16} color="#666" />
+              <Text style={styles.dateText}>{dateString}</Text>
+            </View>
+            <View style={styles.dateTimeContainer}>
+              <MaterialCommunityIcons
+                name="clock-outline"
+                size={16}
+                color="#666"
+              />
+              <Text style={styles.timeText}>{timeString}</Text>
+            </View>
+            {item.tableNumber > 0 && (
+              <View style={styles.dateTimeContainer}>
+                <MaterialCommunityIcons
+                  name="table-furniture"
+                  size={16}
+                  color="#666"
+                />
+                <Text style={styles.tableText}>Table {item.tableNumber}</Text>
+              </View>
+            )}
+          </View>
+          <View style={styles.totalContainer}>
+            <Text style={styles.totalLabel}>Total</Text>
+            <Text style={styles.totalAmount}>₱{formatPrice(item.total)}</Text>
+          </View>
+        </View>
+
+        {/* Preview of first few items */}
+        <View style={styles.itemsPreview}>
+          {item.orders.slice(0, 2).map((order, index) => (
+            <View key={index} style={styles.previewItem}>
+              <Text style={styles.previewItemName}>{order.name}</Text>
+              <Text style={styles.previewItemDetails}>
+                Qty: {order.quantity} × ₱{formatPrice(order.price)}
+              </Text>
+            </View>
+          ))}
+          {item.orders.length > 2 && (
+            <Text style={styles.moreItemsText}>
+              +{item.orders.length - 2} more item
+              {item.orders.length - 2 > 1 ? "s" : ""}
+            </Text>
+          )}
+        </View>
+
+        <View style={styles.orderFooter}>
+          <Text style={styles.itemCount}>
+            {item.orders.length} item{item.orders.length > 1 ? "s" : ""}
+          </Text>
+          <View style={styles.returnIconContainer}>
+            <MaterialCommunityIcons
+              name="keyboard-return"
+              size={18}
+              color="#FF9500"
+            />
+            <Text style={styles.returnText}>Return</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  // Calculate total amount for all orders
+  const grandTotal =
+    runningBillData?.reduce((sum, order) => sum + (order.total || 0), 0) || 0;
 
   if (loadingStates.fetchRunningBill && !runningBillData) {
     return (
@@ -126,98 +276,56 @@ export default function RunningBill() {
         <View style={styles.headerRight} />
       </LinearGradient>
 
-      {runningBillData ? (
-        <FlatList
-          data={runningBillData.orders}
-          keyExtractor={(item, index) => `${item.product_id}-${index}`}
-          renderItem={renderOrderItem}
-          style={styles.ordersList}
-          contentContainerStyle={styles.ordersListContent}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-          ListHeaderComponent={
-            <View style={styles.billHeader}>
-              <View style={styles.billInfo}>
-                <View style={styles.billInfoRow}>
-                  <MaterialCommunityIcons
-                    name="calendar"
-                    size={20}
-                    color="#666"
-                  />
-                  <Text style={styles.billDetailText}>
-                    {new Date(runningBillData.orderDate).toLocaleDateString()}
-                  </Text>
-                </View>
-                <View style={styles.billInfoRow}>
-                  <MaterialCommunityIcons
-                    name="clock-outline"
-                    size={20}
-                    color="#666"
-                  />
-                  <Text style={styles.billDetailText}>
-                    {new Date(runningBillData.orderDate).toLocaleTimeString(
-                      [],
-                      {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      }
-                    )}
-                  </Text>
-                </View>
-                {runningBillData.tableNumber > 0 && (
-                  <View style={styles.billInfoRow}>
-                    <MaterialCommunityIcons
-                      name="table-furniture"
-                      size={20}
-                      color="#666"
-                    />
-                    <Text style={styles.billDetailText}>
-                      Table {runningBillData.tableNumber}
-                    </Text>
-                  </View>
-                )}
+      {runningBillData && runningBillData.length > 0 ? (
+        <>
+          <FlatList
+            data={runningBillData}
+            keyExtractor={(item) => item.id}
+            renderItem={renderOrderCard}
+            style={styles.ordersList}
+            contentContainerStyle={styles.ordersListContent}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+            ListHeaderComponent={
+              <View style={styles.billSummary}>
+                <Text style={styles.summaryTitle}>Current Orders</Text>
+                <Text style={styles.summaryText}>
+                  {runningBillData.length} order
+                  {runningBillData.length > 1 ? "s" : ""} • Grand Total: ₱
+                  {formatPrice(grandTotal)}
+                </Text>
               </View>
-              <Text style={styles.ordersTitle}>Order Items</Text>
-            </View>
-          }
-          ListFooterComponent={
-            <View style={styles.billFooter}>
-              <View style={styles.totalContainer}>
-                <View style={styles.totalRow}>
-                  <Text style={styles.totalLabel}>Total Amount:</Text>
-                  <Text style={styles.totalAmount}>
-                    ₱{runningBillData.total.toFixed(2)}
-                  </Text>
-                </View>
-              </View>
+            }
+          />
 
-              <TouchableOpacity
-                style={[
-                  styles.completeButton,
-                  loadingStates.doneQueue && styles.disabledButton,
-                ]}
-                onPress={handleCompleteOrder}
-                disabled={loadingStates.doneQueue}
-              >
-                {loadingStates.doneQueue ? (
-                  <ActivityIndicator size="small" color="#FFF" />
-                ) : (
-                  <>
-                    <MaterialCommunityIcons
-                      name="check-circle"
-                      size={20}
-                      color="#FFF"
-                    />
-                    <Text style={styles.completeButtonText}>
-                      Complete Order
-                    </Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
-          }
-        />
+          {/* Bottom Action Buttons */}
+          <View style={styles.bottomActions}>
+            <TouchableOpacity
+              style={[
+                styles.completeButton,
+                loadingStates.doneQueue && styles.disabledButton,
+              ]}
+              onPress={handleCompleteOrder}
+              disabled={loadingStates.doneQueue}
+            >
+              {loadingStates.doneQueue ? (
+                <ActivityIndicator size="small" color="#FFF" />
+              ) : (
+                <>
+                  <MaterialCommunityIcons
+                    name="check-circle"
+                    size={20}
+                    color="#FFF"
+                  />
+                  <Text style={styles.completeButtonText}>
+                    Complete All Orders
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </>
       ) : (
         <View style={styles.emptyContainer}>
           <MaterialCommunityIcons
@@ -225,12 +333,156 @@ export default function RunningBill() {
             size={64}
             color="#CCC"
           />
-          <Text style={styles.emptyText}>No bill data available</Text>
+          <Text style={styles.emptyText}>No active orders</Text>
           <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
             <Text style={styles.refreshButtonText}>Refresh</Text>
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Return Order Modal - Fixed for keyboard */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalKeyboardAvoid}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback onPress={() => {}}>
+                <View style={styles.modalContainer}>
+                  {/* Modal Header */}
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Return Order</Text>
+                    <TouchableOpacity
+                      style={styles.closeButton}
+                      onPress={() => setModalVisible(false)}
+                    >
+                      <MaterialCommunityIcons
+                        name="close"
+                        size={24}
+                        color="#666"
+                      />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Scrollable Content */}
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    style={styles.modalScrollView}
+                    contentContainerStyle={styles.modalScrollContent}
+                    keyboardShouldPersistTaps="handled"
+                  >
+                    {/* Order Details */}
+                    {selectedOrder && (
+                      <View style={styles.orderDetails}>
+                        <Text style={styles.orderDetailsTitle}>
+                          Order Details:
+                        </Text>
+                        <View style={styles.orderSummary}>
+                          <Text style={styles.orderDate}>
+                            {new Date(
+                              selectedOrder.orderDate
+                            ).toLocaleDateString()}{" "}
+                            •{" "}
+                            {new Date(
+                              selectedOrder.orderDate
+                            ).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: true,
+                            })}
+                          </Text>
+                          <Text style={styles.orderTotal}>
+                            Total: ₱{formatPrice(selectedOrder.total)}
+                          </Text>
+                        </View>
+
+                        {/* Items List */}
+                        <View style={styles.itemsList}>
+                          {selectedOrder.orders.map((order, index) => (
+                            <View key={index} style={styles.modalOrderItem}>
+                              <Text style={styles.modalItemName}>
+                                {order.name}
+                              </Text>
+                              <Text style={styles.modalItemDetails}>
+                                Qty: {order.quantity} × ₱
+                                {formatPrice(order.price)}
+                              </Text>
+                            </View>
+                          ))}
+                        </View>
+                      </View>
+                    )}
+
+                    {/* Description Input - Make sure this is visible */}
+                    <View style={styles.inputContainer}>
+                      <Text style={styles.inputLabel}>
+                        Reason for return <Text style={styles.required}>*</Text>
+                      </Text>
+                      <TextInput
+                        style={styles.textInput}
+                        placeholder="Please describe the reason for returning this order..."
+                        placeholderTextColor="#999"
+                        multiline={true}
+                        numberOfLines={4}
+                        value={description}
+                        onChangeText={setDescription}
+                        textAlignVertical="top"
+                        blurOnSubmit={false}
+                      />
+                      {/* Character count or helper text */}
+                      <Text style={styles.helperText}>
+                        {description.length}/500 characters
+                      </Text>
+                    </View>
+                  </ScrollView>
+
+                  {/* Action Buttons - Fixed at bottom */}
+                  <View style={styles.modalActions}>
+                    <TouchableOpacity
+                      style={styles.cancelButton}
+                      onPress={() => setModalVisible(false)}
+                    >
+                      <Text style={styles.cancelButtonText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.submitButton,
+                        (!description.trim() || loadingStates.returnOrder) &&
+                          styles.disabledButton,
+                      ]}
+                      onPress={handleReturnOrder}
+                      disabled={
+                        !description.trim() || loadingStates.returnOrder
+                      }
+                    >
+                      {loadingStates.returnOrder ? (
+                        <ActivityIndicator size="small" color="#FFF" />
+                      ) : (
+                        <>
+                          <MaterialCommunityIcons
+                            name="keyboard-return"
+                            size={18}
+                            color="#FFF"
+                          />
+                          <Text style={styles.submitButtonText}>
+                            Return Order
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </Modal>
 
       <Toast />
     </View>
@@ -276,33 +528,26 @@ const styles = StyleSheet.create({
   headerRight: {
     width: 34,
   },
-  billHeader: {
+  billSummary: {
     backgroundColor: "#FFF",
     margin: 15,
     marginBottom: 10,
     borderRadius: 12,
     padding: 20,
     elevation: 2,
-  },
-  billInfo: {
-    marginBottom: 20,
-  },
-  billInfoRow: {
-    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
   },
-  billDetailText: {
-    marginLeft: 10,
-    fontSize: 14,
-    color: "#666",
-    fontFamily: "Poppins_400Regular",
-  },
-  ordersTitle: {
+  summaryTitle: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#333",
     fontFamily: "Poppins_700Bold",
+    marginBottom: 8,
+  },
+  summaryText: {
+    fontSize: 14,
+    color: "#666",
+    fontFamily: "Poppins_400Regular",
   },
   ordersList: {
     flex: 1,
@@ -310,78 +555,128 @@ const styles = StyleSheet.create({
   ordersListContent: {
     paddingBottom: 20,
   },
-  orderItem: {
+  orderCard: {
     backgroundColor: "#FFF",
+    borderRadius: 12,
+    padding: 16,
     marginHorizontal: 15,
-    marginBottom: 10,
-    borderRadius: 10,
-    padding: 15,
+    marginBottom: 12,
     elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  orderHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 12,
   },
   orderInfo: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  itemName: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    fontFamily: "Poppins_600SemiBold",
     flex: 1,
   },
-  itemPrice: {
+  dateTimeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  dateText: {
     fontSize: 14,
+    color: "#333",
+    fontFamily: "Poppins_500Medium",
+    marginLeft: 6,
+  },
+  timeText: {
+    fontSize: 14,
+    color: "#666",
+    fontFamily: "Poppins_400Regular",
+    marginLeft: 6,
+  },
+  tableText: {
+    fontSize: 14,
+    color: "#666",
+    fontFamily: "Poppins_400Regular",
+    marginLeft: 6,
+  },
+  totalContainer: {
+    alignItems: "flex-end",
+  },
+  totalLabel: {
+    fontSize: 12,
+    color: "#666",
+    fontFamily: "Poppins_400Regular",
+    marginBottom: 2,
+  },
+  totalAmount: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#FF9500",
+    fontFamily: "Poppins_700Bold",
+  },
+  itemsPreview: {
+    marginBottom: 12,
+    paddingHorizontal: 8,
+  },
+  previewItem: {
+    marginBottom: 6,
+  },
+  previewItemName: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    fontFamily: "Poppins_600SemiBold",
+  },
+  previewItemDetails: {
+    fontSize: 12,
+    color: "#666",
+    fontFamily: "Poppins_400Regular",
+  },
+  moreItemsText: {
+    fontSize: 12,
     color: "#FF9500",
     fontFamily: "Poppins_500Medium",
+    fontStyle: "italic",
   },
-  quantityContainer: {
+  orderFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#F0F0F0",
   },
-  quantityText: {
+  itemCount: {
     fontSize: 14,
     color: "#666",
     fontFamily: "Poppins_400Regular",
   },
-  subtotalText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    fontFamily: "Poppins_600SemiBold",
-  },
-  billFooter: {
-    backgroundColor: "#FFF",
-    margin: 15,
-    marginTop: 10,
-    borderRadius: 12,
-    padding: 20,
-    elevation: 2,
-  },
-  totalContainer: {
-    borderTopWidth: 2,
-    borderTopColor: "#E0E0E0",
-    paddingTop: 15,
-    marginBottom: 20,
-  },
-  totalRow: {
+  returnIconContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
   },
-  totalLabel: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-    fontFamily: "Poppins_700Bold",
-  },
-  totalAmount: {
-    fontSize: 20,
-    fontWeight: "bold",
+  returnText: {
+    fontSize: 14,
     color: "#FF9500",
-    fontFamily: "Poppins_700Bold",
+    fontFamily: "Poppins_500Medium",
+    marginLeft: 4,
+  },
+  bottomActions: {
+    backgroundColor: "#FFF",
+    paddingHorizontal: 15,
+    paddingVertical: 20,
+    paddingBottom: 35,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   completeButton: {
     backgroundColor: "#4CAF50",
@@ -389,8 +684,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 15,
-    borderRadius: 10,
+    borderRadius: 12,
     elevation: 2,
+    marginBottom: 12,
   },
   completeButtonText: {
     color: "#FFF",
@@ -425,5 +721,167 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontWeight: "bold",
     fontFamily: "Poppins_600SemiBold",
+  },
+  // Modal Styles - Updated
+  modalKeyboardAvoid: {
+    flex: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+    paddingTop: 50,
+  },
+  modalContainer: {
+    backgroundColor: "#FFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: "90%",
+    minHeight: 500, // Increased minimum height
+    flexDirection: "column", // Ensure proper layout
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333",
+    fontFamily: "Poppins_700Bold",
+  },
+  closeButton: {
+    padding: 5,
+  },
+  modalScrollView: {
+    flex: 1, // Take available space
+  },
+  modalScrollContent: {
+    paddingBottom: 20, // Add padding at bottom
+  },
+  orderDetails: {
+    marginBottom: 24, // Increased spacing
+  },
+  orderDetailsTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    fontFamily: "Poppins_600SemiBold",
+    marginBottom: 12,
+  },
+  orderSummary: {
+    backgroundColor: "#F8F8F8",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+  },
+  orderDate: {
+    fontSize: 14,
+    color: "#666",
+    fontFamily: "Poppins_400Regular",
+    marginBottom: 4,
+  },
+  orderTotal: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#FF9500",
+    fontFamily: "Poppins_600SemiBold",
+  },
+  itemsList: {
+    maxHeight: 120, // Reduced to make room for input
+  },
+  modalOrderItem: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+  },
+  modalItemName: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    fontFamily: "Poppins_600SemiBold",
+  },
+  modalItemDetails: {
+    fontSize: 12,
+    color: "#666",
+    fontFamily: "Poppins_400Regular",
+    marginTop: 2,
+  },
+  inputContainer: {
+    marginBottom: 0, // Remove margin since it's in ScrollView
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    fontFamily: "Poppins_600SemiBold",
+    marginBottom: 8,
+  },
+  required: {
+    color: "#FF4B4B",
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    fontFamily: "Poppins_400Regular",
+    minHeight: 100,
+    maxHeight: 120,
+    backgroundColor: "#FFF", // Ensure white background
+  },
+  helperText: {
+    fontSize: 12,
+    color: "#999",
+    fontFamily: "Poppins_400Regular",
+    marginTop: 4,
+    textAlign: "right",
+  },
+  modalActions: {
+    flexDirection: "row",
+    gap: 12,
+    paddingTop: 16, // Increased padding
+    borderTopWidth: 1,
+    borderTopColor: "#F0F0F0",
+    marginTop: 8, // Add margin from content
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: "#F0F0F0",
+    paddingVertical: 15,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+    fontFamily: "Poppins_600SemiBold",
+  },
+  submitButton: {
+    flex: 1,
+    backgroundColor: "#FF4B4B",
+    paddingVertical: 15,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFF",
+    fontFamily: "Poppins_600SemiBold",
+    marginLeft: 6,
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
 });

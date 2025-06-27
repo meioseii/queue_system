@@ -29,6 +29,7 @@ import EditProfile from "./screens/EditProfile";
 import QRScanner from "./QRScanner";
 import CreateQueue from "./screens/CreateQueue";
 import RunningBill from "./screens/RunningBill";
+import RunningBillDetail from "./screens/RunningBillDetail";
 import OrderHistory from "./screens/OrderHistory";
 import OrderHistoryById from "./screens/OrderHistoryById";
 
@@ -285,6 +286,11 @@ export default function AppLayout() {
         <Stack.Screen
           name="RunningBill"
           component={RunningBill}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="RunningBillDetail"
+          component={RunningBillDetail}
           options={{ headerShown: false }}
         />
         <Stack.Screen

@@ -107,9 +107,10 @@ type LoadingState = {
   cancelQueue: boolean;
   checkLastSeated: boolean;
   doneQueue: boolean;
-  fetchRunningBill: boolean; // Add this
+  fetchRunningBill: boolean;
   fetchOrderHistory: boolean;
   fetchOrderHistoryById: boolean;
+  returnOrder: boolean; // Add this
 };
 
 type LastSeatedQueue = {
@@ -130,7 +131,7 @@ export type AppStore = {
   error: string | null;
   currentQueue: QueueInfo | null;
   lastSeatedQueue: LastSeatedQueue | null;
-  runningBillData: RunningBillData | null; // Add this
+  runningBillData: RunningBillData | null;
   orderHistory: OrderHistoryItem[];
   orderHistoryDetail: OrderHistoryDetail | null;
   fetchReservations: () => Promise<void>;
@@ -164,10 +165,11 @@ export type AppStore = {
   cancelQueue: () => Promise<void>;
   clearQueue: () => void;
   doneQueue: () => Promise<void>;
-  fetchRunningBill: () => Promise<void>; // Add this
-  completeOrder: () => Promise<void>; // Add this
+  fetchRunningBill: () => Promise<void>;
+  completeOrder: () => Promise<void>;
   fetchOrderHistory: () => Promise<void>;
   fetchOrderHistoryById: (id: string) => Promise<void>;
+  returnOrder: (payload: { id: string; description: string }) => Promise<void>; // Add this
 };
 
 const initialLoadingState: LoadingState = {
@@ -189,9 +191,10 @@ const initialLoadingState: LoadingState = {
   cancelQueue: false,
   checkLastSeated: false,
   doneQueue: false,
-  fetchRunningBill: false, // Add this
+  fetchRunningBill: false,
   fetchOrderHistory: false,
   fetchOrderHistoryById: false,
+  returnOrder: false, // Add this
 };
 
 // API request wrapper with error handling
@@ -236,7 +239,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   error: null,
   currentQueue: null,
   lastSeatedQueue: null,
-  runningBillData: null, // Add this
+  runningBillData: null,
   orderHistory: [],
   orderHistoryDetail: null,
 
@@ -770,6 +773,34 @@ export const useAppStore = create<AppStore>((set, get) => ({
       set({ orderHistoryDetail: data });
     } catch (error) {
       // Error already handled by apiRequest
+      throw error;
+    }
+  },
+
+  // Add the returnOrder function
+  returnOrder: async (payload: { id: string; description: string }) => {
+    set({ loadingStates: { ...initialLoadingState, returnOrder: true } });
+    try {
+      const { token } = useAuthStore.getState();
+      const data = await apiRequest(
+        "/customer/order-history/return",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        },
+        "returnOrder",
+        set
+      );
+
+      // Refresh running bill data after successful return
+      await get().fetchRunningBill();
+
+      return data;
+    } catch (error) {
       throw error;
     }
   },
