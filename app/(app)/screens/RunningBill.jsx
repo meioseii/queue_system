@@ -340,148 +340,140 @@ export default function RunningBill() {
         </View>
       )}
 
-      {/* Return Order Modal - Fixed for keyboard */}
+      {/* Return Order Modal - Fixed spacing */}
       <Modal
         animationType="slide"
         transparent={true}
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.modalKeyboardAvoid}
-        >
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View style={styles.modalOverlay}>
-              <TouchableWithoutFeedback onPress={() => {}}>
-                <View style={styles.modalContainer}>
-                  {/* Modal Header */}
-                  <View style={styles.modalHeader}>
-                    <Text style={styles.modalTitle}>Return Order</Text>
-                    <TouchableOpacity
-                      style={styles.closeButton}
-                      onPress={() => setModalVisible(false)}
-                    >
-                      <MaterialCommunityIcons
-                        name="close"
-                        size={24}
-                        color="#666"
-                      />
-                    </TouchableOpacity>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            {/* Modal Header - Fixed */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Return Order</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <MaterialCommunityIcons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Scrollable Content - Fixed spacing */}
+            <ScrollView
+              style={styles.modalScrollView}
+              contentContainerStyle={styles.modalScrollContent}
+              showsVerticalScrollIndicator={true}
+              keyboardShouldPersistTaps="always"
+              removeClippedSubviews={false}
+              scrollEventThrottle={16}
+            >
+              {/* Order Details */}
+              {selectedOrder && (
+                <View>
+                  <Text style={styles.orderDetailsTitle}>Order Details:</Text>
+                  <View style={styles.orderSummary}>
+                    <Text style={styles.orderDate}>
+                      {new Date(selectedOrder.orderDate).toLocaleDateString()} •{" "}
+                      {new Date(selectedOrder.orderDate).toLocaleTimeString(
+                        [],
+                        {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        }
+                      )}
+                    </Text>
+                    <Text style={styles.orderTotal}>
+                      Total: ₱{formatPrice(selectedOrder.total)}
+                    </Text>
+                    <Text style={styles.itemCount}>
+                      {selectedOrder.orders.length} item
+                      {selectedOrder.orders.length > 1 ? "s" : ""}
+                    </Text>
                   </View>
 
-                  {/* Scrollable Content */}
-                  <ScrollView
-                    showsVerticalScrollIndicator={false}
-                    style={styles.modalScrollView}
-                    contentContainerStyle={styles.modalScrollContent}
-                    keyboardShouldPersistTaps="handled"
-                  >
-                    {/* Order Details */}
-                    {selectedOrder && (
-                      <View style={styles.orderDetails}>
-                        <Text style={styles.orderDetailsTitle}>
-                          Order Details:
+                  {/* Items List */}
+                  <Text style={styles.itemsListTitle}>Items:</Text>
+                  <View style={styles.itemsList}>
+                    {selectedOrder.orders.map((order, index) => (
+                      <View key={index} style={styles.modalOrderItem}>
+                        <View style={styles.itemRow}>
+                          <Text style={styles.modalItemName} numberOfLines={2}>
+                            {order.name}
+                          </Text>
+                          <Text style={styles.itemPrice}>
+                            ₱{formatPrice(order.price)}
+                          </Text>
+                        </View>
+                        <Text style={styles.modalItemDetails}>
+                          Quantity: {order.quantity} × ₱
+                          {formatPrice(order.price)} = ₱
+                          {formatPrice(order.quantity * order.price)}
                         </Text>
-                        <View style={styles.orderSummary}>
-                          <Text style={styles.orderDate}>
-                            {new Date(
-                              selectedOrder.orderDate
-                            ).toLocaleDateString()}{" "}
-                            •{" "}
-                            {new Date(
-                              selectedOrder.orderDate
-                            ).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              hour12: true,
-                            })}
-                          </Text>
-                          <Text style={styles.orderTotal}>
-                            Total: ₱{formatPrice(selectedOrder.total)}
-                          </Text>
-                        </View>
-
-                        {/* Items List */}
-                        <View style={styles.itemsList}>
-                          {selectedOrder.orders.map((order, index) => (
-                            <View key={index} style={styles.modalOrderItem}>
-                              <Text style={styles.modalItemName}>
-                                {order.name}
-                              </Text>
-                              <Text style={styles.modalItemDetails}>
-                                Qty: {order.quantity} × ₱
-                                {formatPrice(order.price)}
-                              </Text>
-                            </View>
-                          ))}
-                        </View>
                       </View>
-                    )}
-
-                    {/* Description Input - Make sure this is visible */}
-                    <View style={styles.inputContainer}>
-                      <Text style={styles.inputLabel}>
-                        Reason for return <Text style={styles.required}>*</Text>
-                      </Text>
-                      <TextInput
-                        style={styles.textInput}
-                        placeholder="Please describe the reason for returning this order..."
-                        placeholderTextColor="#999"
-                        multiline={true}
-                        numberOfLines={4}
-                        value={description}
-                        onChangeText={setDescription}
-                        textAlignVertical="top"
-                        blurOnSubmit={false}
-                      />
-                      {/* Character count or helper text */}
-                      <Text style={styles.helperText}>
-                        {description.length}/500 characters
-                      </Text>
-                    </View>
-                  </ScrollView>
-
-                  {/* Action Buttons - Fixed at bottom */}
-                  <View style={styles.modalActions}>
-                    <TouchableOpacity
-                      style={styles.cancelButton}
-                      onPress={() => setModalVisible(false)}
-                    >
-                      <Text style={styles.cancelButtonText}>Cancel</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.submitButton,
-                        (!description.trim() || loadingStates.returnOrder) &&
-                          styles.disabledButton,
-                      ]}
-                      onPress={handleReturnOrder}
-                      disabled={
-                        !description.trim() || loadingStates.returnOrder
-                      }
-                    >
-                      {loadingStates.returnOrder ? (
-                        <ActivityIndicator size="small" color="#FFF" />
-                      ) : (
-                        <>
-                          <MaterialCommunityIcons
-                            name="keyboard-return"
-                            size={18}
-                            color="#FFF"
-                          />
-                          <Text style={styles.submitButtonText}>
-                            Return Order
-                          </Text>
-                        </>
-                      )}
-                    </TouchableOpacity>
+                    ))}
                   </View>
                 </View>
-              </TouchableWithoutFeedback>
+              )}
+
+              {/* Description Input */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>
+                  Reason for return <Text style={styles.required}>*</Text>
+                </Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Please describe the reason for returning this order..."
+                  placeholderTextColor="#999"
+                  multiline={true}
+                  numberOfLines={4}
+                  value={description}
+                  onChangeText={setDescription}
+                  textAlignVertical="top"
+                  blurOnSubmit={false}
+                  maxLength={500}
+                />
+                <Text style={styles.helperText}>
+                  {description.length}/500 characters
+                </Text>
+              </View>
+            </ScrollView>
+
+            {/* Action Buttons - Fixed at bottom */}
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.submitButton,
+                  (!description.trim() || loadingStates.returnOrder) &&
+                    styles.disabledButton,
+                ]}
+                onPress={handleReturnOrder}
+                disabled={!description.trim() || loadingStates.returnOrder}
+              >
+                {loadingStates.returnOrder ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <>
+                    <MaterialCommunityIcons
+                      name="keyboard-return"
+                      size={18}
+                      color="#FFF"
+                    />
+                    <Text style={styles.submitButtonText}>Return Order</Text>
+                  </>
+                )}
+              </TouchableOpacity>
             </View>
-          </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
+          </View>
+        </View>
       </Modal>
 
       <Toast />
@@ -722,33 +714,29 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontFamily: "Poppins_600SemiBold",
   },
-  // Modal Styles - Updated
-  modalKeyboardAvoid: {
-    flex: 1,
-  },
+  // Modal Styles - Simplified and fixed
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "flex-end",
-    paddingTop: 50,
   },
   modalContainer: {
     backgroundColor: "#FFF",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: "90%",
-    minHeight: 500, // Increased minimum height
-    flexDirection: "column", // Ensure proper layout
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    height: "85%", // Fixed height
+    maxHeight: "85%",
   },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
     paddingBottom: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#E0E0E0",
+    marginBottom: 15,
   },
   modalTitle: {
     fontSize: 20,
@@ -760,13 +748,11 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   modalScrollView: {
-    flex: 1, // Take available space
+    flex: 1,
   },
   modalScrollContent: {
-    paddingBottom: 20, // Add padding at bottom
-  },
-  orderDetails: {
-    marginBottom: 24, // Increased spacing
+    paddingBottom: 0, // Removed excessive padding
+    flexGrow: 1,
   },
   orderDetailsTitle: {
     fontSize: 16,
@@ -778,8 +764,8 @@ const styles = StyleSheet.create({
   orderSummary: {
     backgroundColor: "#F8F8F8",
     borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+    padding: 15,
+    marginBottom: 16, // Reduced margin
   },
   orderDate: {
     fontSize: 14,
@@ -792,29 +778,58 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#FF9500",
     fontFamily: "Poppins_600SemiBold",
+    marginBottom: 4,
+  },
+  itemCount: {
+    fontSize: 12,
+    color: "#999",
+    fontFamily: "Poppins_400Regular",
+  },
+  itemsListTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    fontFamily: "Poppins_600SemiBold",
+    marginBottom: 8,
   },
   itemsList: {
-    maxHeight: 120, // Reduced to make room for input
+    backgroundColor: "#FAFAFA",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16, // Reduced margin
   },
   modalOrderItem: {
-    paddingVertical: 8,
+    paddingVertical: 8, // Reduced padding
     borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
+    borderBottomColor: "#E8E8E8",
+  },
+  itemRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 4,
   },
   modalItemName: {
     fontSize: 14,
     fontWeight: "600",
     color: "#333",
     fontFamily: "Poppins_600SemiBold",
+    flex: 1,
+    marginRight: 10,
+  },
+  itemPrice: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#FF9500",
+    fontFamily: "Poppins_600SemiBold",
   },
   modalItemDetails: {
     fontSize: 12,
     color: "#666",
     fontFamily: "Poppins_400Regular",
-    marginTop: 2,
   },
   inputContainer: {
-    marginBottom: 0, // Remove margin since it's in ScrollView
+    marginBottom: 0, // Removed bottom margin - last element
   },
   inputLabel: {
     fontSize: 14,
@@ -833,9 +848,9 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 14,
     fontFamily: "Poppins_400Regular",
-    minHeight: 100,
-    maxHeight: 120,
-    backgroundColor: "#FFF", // Ensure white background
+    minHeight: 100, // Reduced height
+    textAlignVertical: "top",
+    backgroundColor: "#FFF",
   },
   helperText: {
     fontSize: 12,
@@ -847,10 +862,11 @@ const styles = StyleSheet.create({
   modalActions: {
     flexDirection: "row",
     gap: 12,
-    paddingTop: 16, // Increased padding
+    paddingTop: 16,
+    paddingBottom: 20,
     borderTopWidth: 1,
     borderTopColor: "#F0F0F0",
-    marginTop: 8, // Add margin from content
+    backgroundColor: "#FFF",
   },
   cancelButton: {
     flex: 1,
