@@ -13,6 +13,7 @@ type RegisterPayload = {
   email: string;
   first_name: string;
   last_name: string;
+  mobileNumber: string; // Add this field
 };
 
 type SendOtpPayload = {
@@ -78,7 +79,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     }
   },
 
-  register: async ({ first_name, last_name, username, email, password }) => {
+  register: async ({ first_name, last_name, username, email, password, mobileNumber }) => {
     set({ loading: true, error: null });
 
     try {
@@ -91,6 +92,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
           username,
           email,
           password,
+          mobileNumber, // Add this field
         }),
       });
 

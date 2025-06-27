@@ -37,6 +37,7 @@ type FormData = {
   email: string;
   password: string;
   confirmPassword: string;
+  mobileNumber: string; // Add this field
 };
 
 export default function Register() {
@@ -90,7 +91,7 @@ export default function Register() {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : "height"} // adjust based on header height, etc.
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView
           contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
@@ -114,6 +115,7 @@ export default function Register() {
             <Text style={styles.iconText}>iQUEUE</Text>
           </View>
           <View style={styles.formContainer}>
+            {/* First Name */}
             <Controller
               control={control}
               name="first_name"
@@ -134,19 +136,10 @@ export default function Register() {
               )}
             />
             {errors.first_name && (
-              <Text
-                style={{
-                  color: "red",
-                  marginLeft: 40,
-                  fontFamily: "Poppins_400Regular",
-                  fontSize: 12,
-                  paddingHorizontal: 10,
-                }}
-              >
-                {errors.first_name.message}
-              </Text>
+              <Text style={styles.errorText}>{errors.first_name.message}</Text>
             )}
 
+            {/* Last Name */}
             <Controller
               control={control}
               name="last_name"
@@ -167,19 +160,10 @@ export default function Register() {
               )}
             />
             {errors.last_name && (
-              <Text
-                style={{
-                  color: "red",
-                  marginLeft: 40,
-                  fontFamily: "Poppins_400Regular",
-                  fontSize: 12,
-                  paddingHorizontal: 10,
-                }}
-              >
-                {errors.last_name.message}
-              </Text>
+              <Text style={styles.errorText}>{errors.last_name.message}</Text>
             )}
 
+            {/* Username */}
             <Controller
               control={control}
               name="username"
@@ -200,19 +184,10 @@ export default function Register() {
               )}
             />
             {errors.username && (
-              <Text
-                style={{
-                  color: "red",
-                  marginLeft: 40,
-                  fontFamily: "Poppins_400Regular",
-                  fontSize: 12,
-                  paddingHorizontal: 10,
-                }}
-              >
-                {errors.username.message}
-              </Text>
+              <Text style={styles.errorText}>{errors.username.message}</Text>
             )}
 
+            {/* Email */}
             <Controller
               control={control}
               name="email"
@@ -239,19 +214,45 @@ export default function Register() {
               )}
             />
             {errors.email && (
-              <Text
-                style={{
-                  color: "red",
-                  marginLeft: 40,
-                  fontFamily: "Poppins_400Regular",
-                  fontSize: 12,
-                  paddingHorizontal: 10,
-                }}
-              >
-                {errors.email.message}
+              <Text style={styles.errorText}>{errors.email.message}</Text>
+            )}
+
+            {/* Mobile Number - New Field */}
+            <Controller
+              control={control}
+              name="mobileNumber"
+              rules={{
+                required: "Mobile number is required",
+                pattern: {
+                  value: /^(09|\+639)\d{9}$/,
+                  message:
+                    "Please enter a valid Philippine mobile number (09XXXXXXXXX or +639XXXXXXXXX)",
+                },
+              }}
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  label="Mobile Number"
+                  mode="outlined"
+                  outlineColor="#000"
+                  activeOutlineColor="#FF9500"
+                  textColor="#000"
+                  style={[styles.input, { backgroundColor: "transparent" }]}
+                  contentStyle={{ fontFamily: "Poppins_400Regular" }}
+                  value={value}
+                  onChangeText={onChange}
+                  error={!!errors.mobileNumber}
+                  keyboardType="phone-pad"
+                  placeholder="09123456789"
+                />
+              )}
+            />
+            {errors.mobileNumber && (
+              <Text style={styles.errorText}>
+                {errors.mobileNumber.message}
               </Text>
             )}
 
+            {/* Password */}
             <Controller
               control={control}
               name="password"
@@ -286,19 +287,10 @@ export default function Register() {
               )}
             />
             {errors.password && (
-              <Text
-                style={{
-                  color: "red",
-                  marginLeft: 40,
-                  fontFamily: "Poppins_400Regular",
-                  fontSize: 12,
-                  paddingHorizontal: 10,
-                }}
-              >
-                {errors.password.message}
-              </Text>
+              <Text style={styles.errorText}>{errors.password.message}</Text>
             )}
 
+            {/* Confirm Password */}
             <Controller
               control={control}
               name="confirmPassword"
@@ -329,15 +321,7 @@ export default function Register() {
               )}
             />
             {errors.confirmPassword && (
-              <Text
-                style={{
-                  color: "red",
-                  marginLeft: 40,
-                  fontFamily: "Poppins_400Regular",
-                  fontSize: 12,
-                  paddingHorizontal: 10,
-                }}
-              >
+              <Text style={styles.errorText}>
                 {errors.confirmPassword.message}
               </Text>
             )}
@@ -416,5 +400,12 @@ const styles = StyleSheet.create({
     padding: 0,
     marginTop: 10,
     height: 40,
+  },
+  errorText: {
+    color: "red",
+    marginLeft: 40,
+    fontFamily: "Poppins_400Regular",
+    fontSize: 12,
+    paddingHorizontal: 10,
   },
 });

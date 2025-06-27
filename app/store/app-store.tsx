@@ -38,6 +38,7 @@ type UserInfo = {
   last_Name: string;
   email: string;
   username: string;
+  mobileNumber: string; // Add this field
 };
 
 export type CartItem = {
@@ -144,6 +145,7 @@ export type AppStore = {
     first_Name: string;
     last_Name: string;
     username: string;
+    mobileNumber: string; // Add this field
   }) => Promise<void>;
   createReservation: (payload: {
     num_people: number;

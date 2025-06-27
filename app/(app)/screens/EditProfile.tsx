@@ -13,6 +13,7 @@ type FormData = {
   first_Name: string;
   last_Name: string;
   username: string;
+  mobileNumber: string; // Add mobile number
 };
 
 function EditProfile() {
@@ -36,6 +37,7 @@ function EditProfile() {
       first_Name: "",
       last_Name: "",
       username: "",
+      mobileNumber: "", // Add mobile number default
     },
   });
 
@@ -50,6 +52,7 @@ function EditProfile() {
         first_Name: userInfo.first_Name || "",
         last_Name: userInfo.last_Name || "",
         username: userInfo.username || "",
+        mobileNumber: userInfo.mobileNumber || "", // Add mobile number reset
       });
     }
   }, [userInfo, reset]);
@@ -61,6 +64,7 @@ function EditProfile() {
         first_Name: userInfo.first_Name || "",
         last_Name: userInfo.last_Name || "",
         username: userInfo.username || "",
+        mobileNumber: userInfo.mobileNumber || "", // Add mobile number reset
       });
       Toast.show({
         type: "info",
@@ -122,6 +126,7 @@ function EditProfile() {
           />
         )}
       />
+
       <Controller
         control={control}
         name="first_Name"
@@ -143,6 +148,7 @@ function EditProfile() {
       {errors.first_Name && (
         <Text style={styles.errorText}>{errors.first_Name.message}</Text>
       )}
+
       <Controller
         control={control}
         name="last_Name"
@@ -164,6 +170,7 @@ function EditProfile() {
       {errors.last_Name && (
         <Text style={styles.errorText}>{errors.last_Name.message}</Text>
       )}
+
       <Controller
         control={control}
         name="username"
@@ -185,6 +192,39 @@ function EditProfile() {
       {errors.username && (
         <Text style={styles.errorText}>{errors.username.message}</Text>
       )}
+
+      {/* Mobile Number Field - New */}
+      <Controller
+        control={control}
+        name="mobileNumber"
+        rules={{
+          required: "Mobile number is required",
+          pattern: {
+            value: /^(09|\+639)\d{9}$/,
+            message:
+              "Please enter a valid Philippine mobile number (09XXXXXXXXX or +639XXXXXXXXX)",
+          },
+        }}
+        render={({ field: { onChange, value } }) => (
+          <TextInput
+            label="Mobile Number"
+            value={value}
+            onChangeText={onChange}
+            mode="outlined"
+            style={styles.input}
+            error={!!errors.mobileNumber}
+            outlineColor="#000"
+            activeOutlineColor="#FF9500"
+            textColor="#000"
+            keyboardType="phone-pad"
+            placeholder="09123456789"
+          />
+        )}
+      />
+      {errors.mobileNumber && (
+        <Text style={styles.errorText}>{errors.mobileNumber.message}</Text>
+      )}
+
       <View style={styles.buttonContainer}>
         <Button
           mode="outlined"
