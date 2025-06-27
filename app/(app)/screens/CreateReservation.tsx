@@ -50,8 +50,11 @@ export default function CreateReservation() {
   const {
     control,
     handleSubmit,
-    formState: { errors },
-  } = useForm<FormData>();
+    formState: { errors, isValid },
+    trigger,
+  } = useForm<FormData>({
+    mode: "onChange", // Validate on change
+  });
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -64,43 +67,98 @@ export default function CreateReservation() {
   }
 
   const onSubmit = async (data: FormData) => {
-    if (data.date && data.time) {
-      const reservationDate = new Date(data.date);
-      reservationDate.setHours(
-        data.time.getHours(),
-        data.time.getMinutes(),
-        0,
-        0
-      );
+    // Add validation check
+    if (!data.date || !data.time || !data.guests) {
+      Toast.show({
+        type: "error",
+        text1: "Validation Error",
+        text2: "Please fill in all required fields",
+        visibilityTime: 3000,
+        autoHide: true,
+        position: "bottom",
+      });
+      return;
+    }
 
-      const formattedDate = `${reservationDate.getFullYear()}-${String(
-        reservationDate.getMonth() + 1
-      ).padStart(2, "0")}-${String(reservationDate.getDate()).padStart(
-        2,
-        "0"
-      )}T${String(reservationDate.getHours()).padStart(2, "0")}:${String(
-        reservationDate.getMinutes()
-      ).padStart(2, "0")}:00`;
+    // Validate guest number (maximum 6)
+    const guestCount = parseInt(data.guests, 10);
+    if (isNaN(guestCount) || guestCount < 1 || guestCount > 6) {
+      Toast.show({
+        type: "error",
+        text1: "Invalid Guest Count",
+        text2: "Please enter a valid number of guests (1-6 people only)",
+        visibilityTime: 3000,
+        autoHide: true,
+        position: "bottom",
+      });
+      return;
+    }
 
-      const payload = {
-        num_people: parseInt(data.guests, 10),
-        table_number: 1,
-        reservation_date: formattedDate,
-      };
+    const reservationDate = new Date(data.date);
+    reservationDate.setHours(
+      data.time.getHours(),
+      data.time.getMinutes(),
+      0,
+      0
+    );
 
-      try {
-        await useAppStore.getState().createReservation(payload);
+    // Validate date is at least 3 days from now
+    const minimumDate = new Date();
+    minimumDate.setDate(minimumDate.getDate() + 3);
+    minimumDate.setHours(0, 0, 0, 0); // Reset time for date comparison
+
+    if (reservationDate < minimumDate) {
+      Toast.show({
+        type: "error",
+        text1: "Invalid Date",
+        text2: "Please select a date at least 3 days from today",
+        visibilityTime: 3000,
+        autoHide: true,
+        position: "bottom",
+      });
+      return;
+    }
+
+    const formattedDate = `${reservationDate.getFullYear()}-${String(
+      reservationDate.getMonth() + 1
+    ).padStart(2, "0")}-${String(reservationDate.getDate()).padStart(
+      2,
+      "0"
+    )}T${String(reservationDate.getHours()).padStart(2, "0")}:${String(
+      reservationDate.getMinutes()
+    ).padStart(2, "0")}:00`;
+
+    const payload = {
+      num_people: guestCount,
+      table_number: 1,
+      reservation_date: formattedDate,
+    };
+
+    try {
+      await useAppStore.getState().createReservation(payload);
+
+      Toast.show({
+        type: "success",
+        text1: "Success",
+        text2: "Reservation created successfully!",
+        visibilityTime: 2000,
+        autoHide: true,
+        position: "bottom",
+      });
+
+      setTimeout(() => {
         navigation.navigate("SuccessReservation");
-      } catch (err: any) {
-        Toast.show({
-          type: "error",
-          text1: `Failed to Create Reservation`,
-          text2: err.message,
-          visibilityTime: 3000,
-          autoHide: true,
-          position: "bottom",
-        });
-      }
+      }, 1000);
+    } catch (err: any) {
+      console.error("Reservation creation error:", err);
+      Toast.show({
+        type: "error",
+        text1: "Failed to Create Reservation",
+        text2: err.message || "Please try again later",
+        visibilityTime: 3000,
+        autoHide: true,
+        position: "bottom",
+      });
     }
   };
 
@@ -132,8 +190,15 @@ export default function CreateReservation() {
               rules={{
                 required: "Number of guests is required",
                 pattern: {
-                  value: /^[1-9][0-9]*$/,
-                  message: "Please enter a valid number",
+                  value: /^[1-6]$/,
+                  message: "Please enter a number between 1 and 6",
+                },
+                validate: (value) => {
+                  const num = parseInt(value, 10);
+                  if (isNaN(num) || num < 1 || num > 6) {
+                    return "Please enter a valid number between 1 and 6";
+                  }
+                  return true;
                 },
               }}
               render={({ field: { onChange, onBlur, value } }) => (
@@ -145,7 +210,7 @@ export default function CreateReservation() {
                   value={value}
                   error={!!errors.guests}
                   style={styles.input}
-                  placeholder="Up to 6 people"
+                  placeholder="1 to 6 people only" // Updated placeholder
                   outlineStyle={styles.inputOutline}
                   contentStyle={[styles.inputContent, styles.inputText]}
                   theme={{
@@ -188,13 +253,15 @@ export default function CreateReservation() {
                     textColor="#333"
                     labelStyle={styles.buttonText}
                   >
-                    {value ? value.toDateString() : "Choose a date"}
+                    {value
+                      ? value.toDateString()
+                      : "Choose a date (3 days minimum)"}
                   </Button>
                   <DateTimePickerModal
                     isVisible={isDatePickerVisible}
                     mode="date"
                     minimumDate={
-                      new Date(new Date().setDate(new Date().getDate() + 1))
+                      new Date(new Date().setDate(new Date().getDate() + 4)) // Changed from +1 to +3
                     }
                     onConfirm={(selectedDate) => {
                       onChange(selectedDate);
@@ -288,7 +355,7 @@ export default function CreateReservation() {
             contentStyle={styles.submitButtonContent}
             buttonColor="#FF9500"
             loading={loadingStates.createReservation}
-            disabled={loadingStates.createReservation}
+            disabled={loadingStates.createReservation || !isValid} // Disable if form is invalid
             labelStyle={styles.submitButtonText}
           >
             Confirm Reservation

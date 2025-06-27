@@ -164,6 +164,12 @@ export default function Home() {
             const payload = { reservation_id };
             try {
               await useAppStore.getState().cancelReservation(payload);
+
+              console.log("Reservation cancelled, refreshing data...");
+              // Force refresh the reservations data
+
+              console.log("New reservations data:", reservations);
+
               setModalVisible(false);
               Toast.show({
                 type: "success",
@@ -186,6 +192,7 @@ export default function Home() {
         },
       ]
     );
+    await fetchReservations();
   };
 
   const handleClearQueue = async () => {
@@ -246,6 +253,32 @@ export default function Home() {
         return "check-circle";
       case "WAITING":
         return "clock-outline";
+      default:
+        return "help-circle";
+    }
+  };
+
+  const getReservationStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "confirmed":
+        return "#4CAF50";
+      case "pending":
+        return "#FF9500";
+      case "cancelled":
+        return "#F44336";
+      default:
+        return "#666";
+    }
+  };
+
+  const getReservationStatusIcon = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "confirmed":
+        return "check-circle";
+      case "pending":
+        return "clock-outline";
+      case "cancelled":
+        return "close-circle";
       default:
         return "help-circle";
     }
@@ -404,56 +437,147 @@ export default function Home() {
 
         {/* Reservation Modal */}
         <Modal
-          animationType="fade"
+          animationType="slide"
           transparent={true}
           visible={modalVisible}
           onRequestClose={() => setModalVisible(false)}
         >
           <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalTitle}>Your Reserved Table</Text>
-              {selectedReservation ? (
-                <View style={styles.modalDetails}>
-                  <Text style={styles.modalText}>
-                    Time:{" "}
-                    {new Date(
-                      selectedReservation.reservation_date
-                    ).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </Text>
-                  <Text style={styles.modalText}>
-                    Guests: {selectedReservation.num_people}
-                  </Text>
-                  <Text style={styles.modalText}>
-                    Status: {selectedReservation.status}
+            <View style={styles.modernModalContainer}>
+              {/* Header with close button */}
+              <View style={styles.modalHeader}>
+                <View style={styles.modalHeaderContent}>
+                  <View style={styles.modalIconContainer}>
+                    <MaterialCommunityIcons
+                      name="calendar-check"
+                      size={24}
+                      color="#FF9500"
+                    />
+                  </View>
+                  <Text style={styles.modernModalTitle}>
+                    Reservation Details
                   </Text>
                 </View>
-              ) : (
-                <Text style={styles.modalText}>
-                  No reservation details available.
-                </Text>
-              )}
+                <TouchableOpacity
+                  style={styles.closeIconButton}
+                  onPress={() => setModalVisible(false)}
+                  disabled={loadingStates.cancelReservation}
+                >
+                  <MaterialCommunityIcons name="close" size={24} color="#666" />
+                </TouchableOpacity>
+              </View>
 
-              <TouchableOpacity
-                style={[styles.cancelButton, { marginBottom: 10 }]}
-                onPress={() =>
-                  selectedReservation &&
-                  handleCancelReservation(selectedReservation.reservation_id)
-                }
-                disabled={loadingStates.cancelReservation}
-              >
-                <Text style={styles.cancelButtonText}>Cancel Reservation</Text>
-              </TouchableOpacity>
+              {/* Content */}
+              <View style={styles.modalBody}>
+                {selectedReservation ? (
+                  <View style={styles.modernModalDetails}>
+                    {/* Date & Time Card */}
+                    <View style={styles.detailCard}>
+                      <View style={styles.detailIconContainer}>
+                        <MaterialCommunityIcons
+                          name="clock-outline"
+                          size={20}
+                          color="#FF9500"
+                        />
+                      </View>
+                      <View style={styles.detailTextContainer}>
+                        <Text style={styles.detailLabel}>Date & Time</Text>
+                        <Text style={styles.detailValue}>
+                          {new Date(
+                            selectedReservation.reservation_date
+                          ).toLocaleDateString("en-US", {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </Text>
+                        <Text style={styles.detailSubValue}>
+                          {new Date(
+                            selectedReservation.reservation_date
+                          ).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true, // Add this to show AM/PM
+                          })}
+                        </Text>
+                      </View>
+                    </View>
 
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setModalVisible(false)}
-                disabled={loadingStates.cancelReservation}
-              >
-                <Text style={styles.closeButtonText}>Close</Text>
-              </TouchableOpacity>
+                    {/* Guests Card */}
+                    <View style={styles.detailCard}>
+                      <View style={styles.detailIconContainer}>
+                        <MaterialCommunityIcons
+                          name="account-group"
+                          size={20}
+                          color="#FF9500"
+                        />
+                      </View>
+                      <View style={styles.detailTextContainer}>
+                        <Text style={styles.detailLabel}>Number of Guests</Text>
+                        <Text style={styles.detailValue}>
+                          {selectedReservation.num_people}{" "}
+                          {selectedReservation.num_people === 1
+                            ? "Guest"
+                            : "Guests"}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.emptyState}>
+                    <MaterialCommunityIcons
+                      name="calendar-remove"
+                      size={48}
+                      color="#CCC"
+                    />
+                    <Text style={styles.emptyStateText}>
+                      No reservation details available
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Action Buttons */}
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={[
+                    styles.modernCancelButton,
+                    loadingStates.cancelReservation && styles.disabledButton,
+                  ]}
+                  onPress={() =>
+                    selectedReservation &&
+                    handleCancelReservation(selectedReservation.reservation_id)
+                  }
+                  disabled={loadingStates.cancelReservation}
+                >
+                  {loadingStates.cancelReservation ? (
+                    <ActivityIndicator size="small" color="#FFF" />
+                  ) : (
+                    <>
+                      <MaterialCommunityIcons
+                        name="cancel"
+                        size={18}
+                        color="#FFF"
+                      />
+                      <Text style={styles.modernCancelButtonText}>
+                        Cancel Reservation
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.modernCloseButton,
+                    loadingStates.cancelReservation && styles.disabledButton,
+                  ]}
+                  onPress={() => setModalVisible(false)}
+                  disabled={loadingStates.cancelReservation}
+                >
+                  <Text style={styles.modernCloseButtonText}>Close</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Modal>
@@ -528,45 +652,170 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     elevation: 3,
   },
+  // Modern Modal Styles
   modalOverlay: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "flex-end", // Changed to slide from bottom
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
-  modalContainer: {
-    width: "80%",
+  modernModalContainer: {
+    width: "100%",
+    maxWidth: 420,
     backgroundColor: "#FFF",
-    borderRadius: 10,
-    padding: 20,
-    elevation: 5,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: 34, // Safe area padding
+    elevation: 10,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: -4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
   },
-  modalTitle: {
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+  },
+  modalHeaderContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  modalIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#FFF5E6",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  modernModalTitle: {
     fontFamily: "Poppins_700Bold",
-    fontSize: 18,
+    fontSize: 20,
     color: "#333",
-    marginBottom: 15,
-    textAlign: "center",
+    flex: 1,
   },
-  modalDetails: {
-    marginBottom: 20,
-  },
-  modalText: {
-    fontFamily: "Poppins_400Regular",
-    fontSize: 14,
-    color: "#555",
-    marginBottom: 10,
-  },
-  closeButton: {
-    backgroundColor: "#FF9500",
-    paddingVertical: 10,
-    borderRadius: 5,
+  closeIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#F5F5F5",
+    justifyContent: "center",
     alignItems: "center",
   },
-  closeButtonText: {
-    fontFamily: "Poppins_700Bold",
+  modalBody: {
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+  },
+  modernModalDetails: {
+    gap: 16,
+  },
+  detailCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    padding: 16,
+    backgroundColor: "#FAFAFA",
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: "#FF9500",
+  },
+  detailIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FFF5E6",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+  },
+  statusIconContainer: {
+    backgroundColor: "#4CAF50", // Will be overridden by dynamic color
+  },
+  detailTextContainer: {
+    flex: 1,
+  },
+  detailLabel: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 4,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  detailValue: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 16,
+    color: "#333",
+    lineHeight: 22,
+  },
+  detailSubValue: {
+    fontFamily: "Poppins_500Medium",
     fontSize: 14,
+    color: "#FF9500",
+    marginTop: 2,
+  },
+  statusText: {
+    fontWeight: "600",
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  emptyStateText: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 16,
+    color: "#999",
+    marginTop: 16,
+    textAlign: "center",
+  },
+  modalActions: {
+    flexDirection: "column",
+    paddingHorizontal: 24,
+    gap: 12,
+  },
+  modernCancelButton: {
+    backgroundColor: "#F44336",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: "#F44336",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  modernCancelButtonText: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 16,
     color: "#FFF",
+    marginLeft: 8,
+  },
+  modernCloseButton: {
+    backgroundColor: "#F5F5F5",
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  modernCloseButtonText: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 16,
+    color: "#666",
   },
   buttonContainer: {
     justifyContent: "center",

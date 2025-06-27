@@ -391,9 +391,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
         "createReservation",
         set
       );
+
+      // Refresh reservations after successful creation
       await useAppStore.getState().fetchReservations();
+
+      return data; // Return the data for success handling
     } catch (error) {
-      // Error already handled by apiRequest
+      // Re-throw the error so it can be caught in the component
+      throw error;
     }
   },
 
@@ -414,9 +419,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
         "cancelReservation",
         set
       );
+
+      // Add this line to refresh reservations after successful cancellation
       await useAppStore.getState().fetchReservations();
+
+      return data; // Return the data for success handling
     } catch (error) {
-      // Error already handled by apiRequest
+      // Re-throw the error so it can be caught in the component
+      throw error;
     }
   },
 
