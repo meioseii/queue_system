@@ -123,7 +123,7 @@ type LastSeatedQueue = {
 
 export type AppStore = {
   loadingStates: LoadingState;
-  reservations: Record<string, Reservation[]>;
+  reservations: Reservation | null; // Change from array to single object
   categories: Category[];
   menuItems: MenuItem[];
   allMenuItems: MenuItem[];
@@ -152,7 +152,7 @@ export type AppStore = {
     table_number: number;
     reservation_date: string;
   }) => Promise<void>;
-  cancelReservation: (payload: { reservation_id: string }) => Promise<void>;
+  cancelReservation: (reservationId: string) => Promise<void>; // Update parameter name for clarity
   addToCart: (payload: CartItem) => Promise<void>;
   updateCartItem: (menuId: string, action: "add" | "deduct") => Promise<void>;
   deleteCartItem: (menuId: string) => Promise<void>;
@@ -213,15 +213,39 @@ const apiRequest = async (
 
   try {
     const response = await fetch(`${BASE_URL}${url}`, options);
+    
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({}));
       throw new Error(
         errorData.msg || `HTTP error! status: ${response.status}`
       );
     }
-    return await response.json();
+
+    // Get response text first to check if it's empty
+    const responseText = await response.text();
+    
+    // If response is empty, return null (for endpoints like /reservation/check)
+    if (!responseText || responseText.trim() === '') {
+      return null;
+    }
+
+    // Try to parse JSON only if there's content
+    try {
+      return JSON.parse(responseText);
+    } catch (parseError) {
+      // For reservation check, empty response is expected - don't log error
+      if (url.includes('/reservation/check')) {
+        return null;
+      }
+      throw new Error('Invalid JSON response from server');
+    }
+
   } catch (error: any) {
-    set({ error: error.message });
+    // Don't set global error for expected empty reservation responses
+    if (!(url.includes('/reservation/check') && 
+          (error.message.includes('JSON') || error.message.includes('404')))) {
+      set({ error: error.message });
+    }
     throw error;
   } finally {
     set((state: AppStore) => ({
@@ -232,7 +256,7 @@ const apiRequest = async (
 
 export const useAppStore = create<AppStore>((set, get) => ({
   loadingStates: initialLoadingState,
-  reservations: {},
+  reservations: null, // Initialize as null instead of empty object
   categories: [],
   menuItems: [],
   allMenuItems: [],
@@ -246,6 +270,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   orderHistoryDetail: null,
 
   fetchReservations: async () => {
+    set({ loadingStates: { ...initialLoadingState, fetchReservations: true } });
     try {
       const { token } = useAuthStore.getState();
       const data = await apiRequest(
@@ -253,7 +278,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
         {
           method: "GET",
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         },
@@ -261,10 +285,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
         set
       );
 
-      const transformedReservations = transformReservationsData(data);
-      set({ reservations: transformedReservations });
-    } catch (error) {
-      // Error already handled by apiRequest
+      // data will be null for empty responses, which is expected
+      set({ reservations: data });
+    } catch (error: any) {
+      // Silently handle empty responses and 404s for reservations
+      set({ reservations: null });
     }
   },
 
@@ -407,30 +432,27 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
 
-  cancelReservation: async (payload) => {
+  cancelReservation: async (reservationId) => {
     set({ loadingStates: { ...initialLoadingState, cancelReservation: true } });
     try {
       const { token } = useAuthStore.getState();
-      const data = await apiRequest(
-        "/reservation/cancel",
+      await apiRequest(
+        "/reservation/cancel", // Correct endpoint
         {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({ reservation_id: reservationId }), // Wrap the ID in an object
         },
         "cancelReservation",
         set
       );
 
-      // Add this line to refresh reservations after successful cancellation
-      await useAppStore.getState().fetchReservations();
-
-      return data; // Return the data for success handling
+      // Clear the reservation after successful cancellation
+      set({ reservations: null });
     } catch (error) {
-      // Re-throw the error so it can be caught in the component
       throw error;
     }
   },

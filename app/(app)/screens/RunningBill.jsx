@@ -328,11 +328,7 @@ export default function RunningBill() {
         </>
       ) : (
         <View style={styles.emptyContainer}>
-          <MaterialCommunityIcons
-            name="receipt-outline"
-            size={64}
-            color="#CCC"
-          />
+          <MaterialCommunityIcons name="receipt" size={64} color="#CCC" />
           <Text style={styles.emptyText}>No active orders</Text>
           <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
             <Text style={styles.refreshButtonText}>Refresh</Text>
